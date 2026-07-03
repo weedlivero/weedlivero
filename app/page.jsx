@@ -6,17 +6,19 @@ import { categories } from '@/data/categories';
 export default function HomePage() {
   return (
     <AccessGate>
-      <Header title="Catalogo" />
-      <main className="mx-auto min-h-screen max-w-5xl px-5 pb-28 pt-8">
-        <section className="rounded-[2rem] bg-white p-7 shadow-soft">
-          <p className="font-bold uppercase tracking-[0.3em] text-brand-green">Weedlivero</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-brand-dark">Scegli una categoria</h1>
-          <p className="mt-3 text-gray-500">Interfaccia semplice: apri una sezione e consulta i prodotti disponibili.</p>
-        </section>
-        <section className="mt-6 grid gap-5 sm:grid-cols-3">
-          {categories.map((category) => (
-            <CategoryCard key={category.slug} category={category} />
-          ))}
+      <main className="min-h-screen bg-gradient-to-b from-white to-green-50 px-5 py-6">
+        <Header />
+
+        <section className="mx-auto mt-8 max-w-md">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-green-600">
+            Scegli una categoria
+          </p>
+
+          <div className="grid gap-4">
+            {categories.map((category) => (
+              <CategoryCard key={category.slug} category={category} />
+            ))}
+          </div>
         </section>
       </main>
     </AccessGate>
