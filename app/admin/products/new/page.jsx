@@ -8,28 +8,192 @@ import Header from '@/components/Header';
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', brand: '', category: 'weed', description: '', image_url: '' });
+
+  const [form, setForm] = useState({
+    id: '',
+    name: '',
+    brand: '',
+    category: 'weed',
+    description: '',
+    image_url: '',
+    video_url: '',
+    thc: '',
+    cbd: '',
+    active: true,
+    featured: false,
+  });
+
+  function updateField(field, value) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
 
   async function save(e) {
     e.preventDefault();
-    if (hasSupabaseConfig) await supabase.from('products').insert([form]);
+
+    const productData = {
+      ...form,
+      id: form.id || `${form.category}-${Date.now()}`,
+    };
+
+    if (hasSupabaseConfig) {
+      await supabase.from('products').insert([productData]);
+    }
+
     router.push('/admin');
   }
 
   return (
     <>
       <Header title="Nuovo prodotto" />
-      <main className="mx-auto max-w-2xl px-5 pb-28 pt-8">
-        <form onSubmit={save} className="rounded-[2rem] bg-white p-7 shadow-soft">
-          <h1 className="text-3xl font-black">Nuovo prodotto</h1>
-          <input className="mt-6 w-full rounded-2xl border p-4" placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="mt-3 w-full rounded-2xl border p-4" placeholder="Brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
-          <select className="mt-3 w-full rounded-2xl border p-4" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-            {categories.map((c) => <option key={c.slug} value={c.slug}>{c.title}</option>)}
-          </select>
-          <textarea className="mt-3 w-full rounded-2xl border p-4" placeholder="Descrizione" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <input className="mt-3 w-full rounded-2xl border p-4" placeholder="URL immagine" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
-          <button className="mt-5 w-full rounded-2xl bg-brand-green p-4 font-bold text-white">Salva</button>
+
+      <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
+        <form onSubmit={save} className="space-y-5">
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h1 className="text-3xl font-black text-gray-900">
+              Nuovo prodotto
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500">
+              Inserisci le informazioni principali del prodotto.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Codice prodotto"
+                value={form.id}
+                onChange={(e) => updateField('id', e.target.value)}
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Nome prodotto"
+                value={form.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                required
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Brand"
+                value={form.brand}
+                onChange={(e) => updateField('brand', e.target.value)}
+              />
+
+              <select
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                value={form.category}
+                onChange={(e) => updateField('category', e.target.value)}
+              >
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Media
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Per ora usa link immagine/video. L’upload diretto arriverà con Supabase Storage.
+            </p>
+
+            <input
+              className="mt-5 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="URL immagine"
+              value={form.image_url}
+              onChange={(e) => updateField('image_url', e.target.value)}
+            />
+
+            <input
+              className="mt-3 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="URL video breve"
+              value={form.video_url}
+              onChange={(e) => updateField('video_url', e.target.value)}
+            />
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Dettagli
+            </h2>
+
+            <textarea
+              className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="Descrizione prodotto"
+              value={form.description}
+              onChange={(e) => updateField('description', e.target.value)}
+            />
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="THC"
+                value={form.thc}
+                onChange={(e) => updateField('thc', e.target.value)}
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="CBD"
+                value={form.cbd}
+                onChange={(e) => updateField('cbd', e.target.value)}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Stato prodotto
+            </h2>
+
+            <div className="mt-5 space-y-3">
+              <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+                <span className="font-bold text-gray-800">
+                  Prodotto attivo
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(e) => updateField('active', e.target.checked)}
+                  className="h-5 w-5"
+                />
+              </label>
+
+              <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+                <span className="font-bold text-gray-800">
+                  In evidenza
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(e) => updateField('featured', e.target.checked)}
+                  className="h-5 w-5"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="sticky bottom-4 z-10">
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-green-600 p-4 text-lg font-black text-white shadow-lg shadow-green-200 active:scale-[0.98]"
+            >
+              Salva prodotto
+            </button>
+          </div>
+
         </form>
       </main>
     </>

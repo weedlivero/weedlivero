@@ -10,47 +10,223 @@ import Header from '@/components/Header';
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
-  const [form, setForm] = useState({ name: '', brand: '', category: 'weed', description: '', image_url: '' });
+
+  const [form, setForm] = useState({
+    id: '',
+    name: '',
+    brand: '',
+    category: 'weed',
+    description: '',
+    image_url: '',
+    video_url: '',
+    thc: '',
+    cbd: '',
+    active: true,
+    featured: false,
+  });
+
+  function updateField(field, value) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
 
   useEffect(() => {
     async function load() {
       if (!hasSupabaseConfig) {
         const product = demoProducts.find((p) => p.id === params.id);
-        if (product) setForm(product);
+        if (product) setForm({ ...form, ...product });
         return;
       }
-      const { data } = await supabase.from('products').select('*').eq('id', params.id).single();
+
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', params.id)
+        .single();
+
       if (data) setForm(data);
     }
+
     load();
   }, [params.id]);
 
   async function save(e) {
     e.preventDefault();
-    if (hasSupabaseConfig) await supabase.from('products').update(form).eq('id', params.id);
+
+    if (hasSupabaseConfig) {
+      await supabase.from('products').update(form).eq('id', params.id);
+    }
+
     router.push('/admin');
   }
 
   async function remove() {
-    if (hasSupabaseConfig) await supabase.from('products').delete().eq('id', params.id);
+    const confirmDelete = window.confirm('Vuoi eliminare questo prodotto?');
+
+    if (!confirmDelete) return;
+
+    if (hasSupabaseConfig) {
+      await supabase.from('products').delete().eq('id', params.id);
+    }
+
     router.push('/admin');
   }
 
   return (
     <>
       <Header title="Modifica prodotto" />
-      <main className="mx-auto max-w-2xl px-5 pb-28 pt-8">
-        <form onSubmit={save} className="rounded-[2rem] bg-white p-7 shadow-soft">
-          <h1 className="text-3xl font-black">Modifica prodotto</h1>
-          <input className="mt-6 w-full rounded-2xl border p-4" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="mt-3 w-full rounded-2xl border p-4" value={form.brand || ''} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
-          <select className="mt-3 w-full rounded-2xl border p-4" value={form.category || 'weed'} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-            {categories.map((c) => <option key={c.slug} value={c.slug}>{c.title}</option>)}
-          </select>
-          <textarea className="mt-3 w-full rounded-2xl border p-4" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <input className="mt-3 w-full rounded-2xl border p-4" value={form.image_url || ''} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
-          <button className="mt-5 w-full rounded-2xl bg-brand-green p-4 font-bold text-white">Aggiorna</button>
-          <button type="button" onClick={remove} className="mt-3 w-full rounded-2xl bg-red-500 p-4 font-bold text-white">Elimina</button>
+
+      <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
+        <form onSubmit={save} className="space-y-5">
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h1 className="text-3xl font-black text-gray-900">
+              Modifica prodotto
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500">
+              Aggiorna le informazioni del prodotto.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Codice prodotto"
+                value={form.id || ''}
+                disabled
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Nome prodotto"
+                value={form.name || ''}
+                onChange={(e) => updateField('name', e.target.value)}
+                required
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Brand"
+                value={form.brand || ''}
+                onChange={(e) => updateField('brand', e.target.value)}
+              />
+
+              <select
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                value={form.category || 'weed'}
+                onChange={(e) => updateField('category', e.target.value)}
+              >
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Media
+            </h2>
+
+            <input
+              className="mt-5 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="URL immagine"
+              value={form.image_url || ''}
+              onChange={(e) => updateField('image_url', e.target.value)}
+            />
+
+            <input
+              className="mt-3 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="URL video breve"
+              value={form.video_url || ''}
+              onChange={(e) => updateField('video_url', e.target.value)}
+            />
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Dettagli
+            </h2>
+
+            <textarea
+              className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="Descrizione prodotto"
+              value={form.description || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+            />
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="THC"
+                value={form.thc || ''}
+                onChange={(e) => updateField('thc', e.target.value)}
+              />
+
+              <input
+                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="CBD"
+                value={form.cbd || ''}
+                onChange={(e) => updateField('cbd', e.target.value)}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-md">
+            <h2 className="text-xl font-black text-gray-900">
+              Stato prodotto
+            </h2>
+
+            <div className="mt-5 space-y-3">
+              <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+                <span className="font-bold text-gray-800">
+                  Prodotto attivo
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.active)}
+                  onChange={(e) => updateField('active', e.target.checked)}
+                  className="h-5 w-5"
+                />
+              </label>
+
+              <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+                <span className="font-bold text-gray-800">
+                  In evidenza
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.featured)}
+                  onChange={(e) => updateField('featured', e.target.checked)}
+                  className="h-5 w-5"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="sticky bottom-4 z-10 space-y-3">
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-green-600 p-4 text-lg font-black text-white shadow-lg shadow-green-200 active:scale-[0.98]"
+            >
+              Aggiorna prodotto
+            </button>
+
+            <button
+              type="button"
+              onClick={remove}
+              className="w-full rounded-2xl bg-red-500 p-4 text-lg font-black text-white shadow-lg shadow-red-200 active:scale-[0.98]"
+            >
+              Elimina prodotto
+            </button>
+          </div>
+
         </form>
       </main>
     </>
