@@ -10,6 +10,7 @@ import Header from '@/components/Header';
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
     id: '',
@@ -18,7 +19,9 @@ export default function EditProductPage() {
     category: 'weed',
     description: '',
     image_url: '',
+    image_path: '',
     video_url: '',
+    video_path: '',
     thc: '',
     cbd: '',
     active: true,
@@ -26,17 +29,57 @@ export default function EditProductPage() {
   });
 
   function updateField(field, value) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function uploadFile(file, folder = 'images') {
+    if (!file) return;
+
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+    setUploading(false);
+
+    if (!response.ok) {
+      alert(result.error || 'Errore upload immagine');
+      return;
+    }
+
+    updateField('image_path', result.path);
+    updateField('image_url', '');
+
+    if (hasSupabaseConfig) {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          image_path: result.path,
+          image_url: '',
+        })
+        .eq('id', params.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+    }
+
+    alert('Immagine aggiornata correttamente');
   }
 
   useEffect(() => {
     async function load() {
       if (!hasSupabaseConfig) {
         const product = demoProducts.find((p) => p.id === params.id);
-        if (product) setForm({ ...form, ...product });
+        if (product) setForm((current) => ({ ...current, ...product }));
         return;
       }
 
@@ -46,7 +89,7 @@ export default function EditProductPage() {
         .eq('id', params.id)
         .single();
 
-      if (data) setForm(data);
+      if (data) setForm((current) => ({ ...current, ...data }));
     }
 
     load();
@@ -56,7 +99,15 @@ export default function EditProductPage() {
     e.preventDefault();
 
     if (hasSupabaseConfig) {
-      await supabase.from('products').update(form).eq('id', params.id);
+      const { error } = await supabase
+        .from('products')
+        .update(form)
+        .eq('id', params.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
     }
 
     router.push('/admin');
@@ -64,11 +115,18 @@ export default function EditProductPage() {
 
   async function remove() {
     const confirmDelete = window.confirm('Vuoi eliminare questo prodotto?');
-
     if (!confirmDelete) return;
 
     if (hasSupabaseConfig) {
-      await supabase.from('products').delete().eq('id', params.id);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', params.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
     }
 
     router.push('/admin');
@@ -80,7 +138,6 @@ export default function EditProductPage() {
 
       <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
         <form onSubmit={save} className="space-y-5">
-
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h1 className="text-3xl font-black text-gray-900">
               Modifica prodotto
@@ -128,16 +185,30 @@ export default function EditProductPage() {
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">
-              Media
-            </h2>
+            <h2 className="text-xl font-black text-gray-900">Media</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Carica una nuova immagine per sostituire quella attuale.
+            </p>
 
             <input
-              className="mt-5 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
-              placeholder="URL immagine"
-              value={form.image_url || ''}
-              onChange={(e) => updateField('image_url', e.target.value)}
+              type="file"
+              accept="image/*"
+              className="mt-5 w-full rounded-2xl border border-gray-200 p-4"
+              onChange={(e) => uploadFile(e.target.files[0], 'images')}
             />
+
+            {uploading ? (
+              <p className="mt-3 text-sm font-bold text-gray-500">
+                Caricamento...
+              </p>
+            ) : null}
+
+            {form.image_path ? (
+              <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
+                Immagine caricata
+              </p>
+            ) : null}
 
             <input
               className="mt-3 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
@@ -148,9 +219,7 @@ export default function EditProductPage() {
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">
-              Dettagli
-            </h2>
+            <h2 className="text-xl font-black text-gray-900">Dettagli</h2>
 
             <textarea
               className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
@@ -177,16 +246,11 @@ export default function EditProductPage() {
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">
-              Stato prodotto
-            </h2>
+            <h2 className="text-xl font-black text-gray-900">Stato prodotto</h2>
 
             <div className="mt-5 space-y-3">
               <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
-                <span className="font-bold text-gray-800">
-                  Prodotto attivo
-                </span>
-
+                <span className="font-bold text-gray-800">Prodotto attivo</span>
                 <input
                   type="checkbox"
                   checked={Boolean(form.active)}
@@ -196,10 +260,7 @@ export default function EditProductPage() {
               </label>
 
               <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
-                <span className="font-bold text-gray-800">
-                  In evidenza
-                </span>
-
+                <span className="font-bold text-gray-800">In evidenza</span>
                 <input
                   type="checkbox"
                   checked={Boolean(form.featured)}
@@ -226,7 +287,6 @@ export default function EditProductPage() {
               Elimina prodotto
             </button>
           </div>
-
         </form>
       </main>
     </>
