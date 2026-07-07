@@ -5,9 +5,15 @@ import { getProduct } from '@/lib/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ProductPage({ params }) {
   const product = await getProduct(params.id);
-  if (!product) notFound();
+
+  if (!product) {
+    notFound();
+  }
 
   return (
     <AccessGate>
@@ -54,22 +60,26 @@ export default async function ProductPage({ params }) {
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {product.thc ? (
+              {product.thc && (
                 <div className="rounded-2xl bg-gray-50 p-4">
                   <p className="text-xs font-bold uppercase text-gray-400">THC</p>
-                  <p className="mt-1 text-xl font-black text-gray-900">{product.thc}</p>
+                  <p className="mt-1 text-xl font-black text-gray-900">
+                    {product.thc}
+                  </p>
                 </div>
-              ) : null}
+              )}
 
-              {product.cbd ? (
+              {product.cbd && (
                 <div className="rounded-2xl bg-gray-50 p-4">
                   <p className="text-xs font-bold uppercase text-gray-400">CBD</p>
-                  <p className="mt-1 text-xl font-black text-gray-900">{product.cbd}</p>
+                  <p className="mt-1 text-xl font-black text-gray-900">
+                    {product.cbd}
+                  </p>
                 </div>
-              ) : null}
+              )}
             </div>
 
-            {product.video_url ? (
+            {product.video_url && (
               <div className="mt-6 overflow-hidden rounded-2xl bg-black">
                 <video
                   src={product.video_url}
@@ -78,7 +88,7 @@ export default async function ProductPage({ params }) {
                   className="w-full"
                 />
               </div>
-            ) : null}
+            )}
           </div>
         </article>
 
