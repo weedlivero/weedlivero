@@ -15,7 +15,7 @@ export default function HomePage() {
           </p>
 
           <div className="grid gap-4">
-            {categories.map((category) => (
+            {categories.filter((category) => category.active).map((category) => (
               <CategoryCard key={category.slug} category={category} />
             ))}
           </div>

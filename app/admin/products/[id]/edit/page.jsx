@@ -117,19 +117,27 @@ export default function EditProductPage() {
     const confirmDelete = window.confirm('Vuoi eliminare questo prodotto?');
     if (!confirmDelete) return;
 
-    if (hasSupabaseConfig) {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', params.id);
+    const response = await fetch('/api/delete-product', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: params.id,
+        image_path: form.image_path,
+        video_path: form.video_path,
+      }),
+    });
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || 'Errore eliminazione prodotto');
+      return;
     }
 
-    router.push('/admin');
+    router.replace('/admin');
+    router.refresh();
   }
 
   return (
@@ -246,7 +254,9 @@ export default function EditProductPage() {
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">Stato prodotto</h2>
+            <h2 className="text-xl font-black text-gray-900">
+              Stato prodotto
+            </h2>
 
             <div className="mt-5 space-y-3">
               <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
