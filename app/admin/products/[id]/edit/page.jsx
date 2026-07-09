@@ -10,7 +10,9 @@ import Header from '@/components/Header';
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
-  const [uploading, setUploading] = useState(false);
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const [form, setForm] = useState({
     id: '',
@@ -35,7 +37,10 @@ export default function EditProductPage() {
   async function uploadFile(file, folder = 'images') {
     if (!file) return;
 
-    setUploading(true);
+    const isVideo = folder === 'videos';
+
+    if (isVideo) setUploadingVideo(true);
+    else setUploadingImage(true);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -47,32 +52,56 @@ export default function EditProductPage() {
     });
 
     const result = await response.json();
-    setUploading(false);
+
+    if (isVideo) setUploadingVideo(false);
+    else setUploadingImage(false);
 
     if (!response.ok) {
-      alert(result.error || 'Errore upload immagine');
+      alert(result.error || 'Errore upload file');
       return;
     }
 
-    updateField('image_path', result.path);
-    updateField('image_url', '');
+    if (isVideo) {
+      updateField('video_path', result.path);
+      updateField('video_url', '');
 
-    if (hasSupabaseConfig) {
-      const { error } = await supabase
-        .from('products')
-        .update({
-          image_path: result.path,
-          image_url: '',
-        })
-        .eq('id', params.id);
+      if (hasSupabaseConfig) {
+        const { error } = await supabase
+          .from('products')
+          .update({
+            video_path: result.path,
+            video_url: '',
+          })
+          .eq('id', params.id);
 
-      if (error) {
-        alert(error.message);
-        return;
+        if (error) {
+          alert(error.message);
+          return;
+        }
       }
-    }
 
-    alert('Immagine aggiornata correttamente');
+      alert('Video aggiornato correttamente');
+    } else {
+      updateField('image_path', result.path);
+      updateField('image_url', '');
+
+      if (hasSupabaseConfig) {
+        const { error } = await supabase
+          .from('products')
+          .update({
+            image_path: result.path,
+            image_url: '',
+          })
+          .eq('id', params.id);
+
+        if (error) {
+          alert(error.message);
+          return;
+        }
+      }
+
+      alert('Immagine aggiornata correttamente');
+    }
   }
 
   useEffect(() => {
@@ -110,7 +139,7 @@ export default function EditProductPage() {
       }
     }
 
-    router.push('/admin');
+    window.location.href = '/admin';
   }
 
   async function remove() {
@@ -136,8 +165,7 @@ export default function EditProductPage() {
       return;
     }
 
-    router.replace('/admin');
-    router.refresh();
+    window.location.href = '/admin';
   }
 
   return (
@@ -195,20 +223,20 @@ export default function EditProductPage() {
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h2 className="text-xl font-black text-gray-900">Media</h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Carica una nuova immagine per sostituire quella attuale.
-            </p>
+            <label className="mt-4 block text-sm font-bold text-gray-700">
+              Immagine prodotto
+            </label>
 
             <input
               type="file"
               accept="image/*"
-              className="mt-5 w-full rounded-2xl border border-gray-200 p-4"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
               onChange={(e) => uploadFile(e.target.files[0], 'images')}
             />
 
-            {uploading ? (
+            {uploadingImage ? (
               <p className="mt-3 text-sm font-bold text-gray-500">
-                Caricamento...
+                Caricamento immagine...
               </p>
             ) : null}
 
@@ -218,12 +246,28 @@ export default function EditProductPage() {
               </p>
             ) : null}
 
+            <label className="mt-6 block text-sm font-bold text-gray-700">
+              Video breve
+            </label>
+
             <input
-              className="mt-3 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
-              placeholder="URL video breve"
-              value={form.video_url || ''}
-              onChange={(e) => updateField('video_url', e.target.value)}
+              type="file"
+              accept="video/*"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
+              onChange={(e) => uploadFile(e.target.files[0], 'videos')}
             />
+
+            {uploadingVideo ? (
+              <p className="mt-3 text-sm font-bold text-gray-500">
+                Caricamento video...
+              </p>
+            ) : null}
+
+            {form.video_path ? (
+              <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
+                Video caricato
+              </p>
+            ) : null}
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">

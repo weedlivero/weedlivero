@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import ProductGrid from '@/components/ProductGrid';
 import { categories } from '@/data/categories';
 import { getProducts } from '@/lib/products';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

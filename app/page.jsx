@@ -23,7 +23,6 @@ export default async function HomePage() {
               <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-green-600">
                 In evidenza
               </p>
-
               <ProductCard product={featuredProducts[0]} />
             </div>
           ) : null}
