@@ -8,7 +8,8 @@ import Header from '@/components/Header';
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [uploading, setUploading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const [form, setForm] = useState({
     id: '',
@@ -33,7 +34,10 @@ export default function NewProductPage() {
   async function uploadFile(file, folder = 'images') {
     if (!file) return;
 
-    setUploading(true);
+    const isVideo = folder === 'videos';
+
+    if (isVideo) setUploadingVideo(true);
+    else setUploadingImage(true);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -45,15 +49,22 @@ export default function NewProductPage() {
     });
 
     const result = await response.json();
-    setUploading(false);
+
+    if (isVideo) setUploadingVideo(false);
+    else setUploadingImage(false);
 
     if (!response.ok) {
-      alert(result.error || 'Errore upload immagine');
+      alert(result.error || 'Errore upload file');
       return;
     }
 
-    updateField('image_path', result.path);
-    updateField('image_url', '');
+    if (isVideo) {
+      updateField('video_path', result.path);
+      updateField('video_url', '');
+    } else {
+      updateField('image_path', result.path);
+      updateField('image_url', '');
+    }
   }
 
   async function save(e) {
@@ -68,7 +79,11 @@ export default function NewProductPage() {
       const { error } = await supabase.from('products').insert([productData]);
 
       if (error) {
-        alert(error.message);
+        if (error.message.includes('duplicate key')) {
+          alert('Esiste già un prodotto con questo codice. Aprilo dall’elenco e modificalo.');
+        } else {
+          alert(error.message);
+        }
         return;
       }
     }
@@ -103,11 +118,25 @@ export default function NewProductPage() {
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h2 className="text-xl font-black text-gray-900">Media</h2>
-            <p className="mt-1 text-sm text-gray-500">Carica immagine nel bucket privato Supabase.</p>
 
-            <input type="file" accept="image/*" className="mt-5 w-full rounded-2xl border border-gray-200 p-4" onChange={(e) => uploadFile(e.target.files[0], 'images')} />
+            <p className="mt-1 text-sm text-gray-500">
+              Carica immagine e video breve nel bucket privato Supabase.
+            </p>
 
-            {uploading ? <p className="mt-3 text-sm font-bold text-gray-500">Caricamento...</p> : null}
+            <label className="mt-5 block text-sm font-bold text-gray-700">
+              Immagine prodotto
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
+              onChange={(e) => uploadFile(e.target.files[0], 'images')}
+            />
+
+            {uploadingImage ? (
+              <p className="mt-3 text-sm font-bold text-gray-500">Caricamento immagine...</p>
+            ) : null}
 
             {form.image_path ? (
               <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
@@ -115,7 +144,26 @@ export default function NewProductPage() {
               </p>
             ) : null}
 
-            <input className="mt-3 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500" placeholder="URL video breve" value={form.video_url} onChange={(e) => updateField('video_url', e.target.value)} />
+            <label className="mt-6 block text-sm font-bold text-gray-700">
+              Video breve
+            </label>
+
+            <input
+              type="file"
+              accept="video/*"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
+              onChange={(e) => uploadFile(e.target.files[0], 'videos')}
+            />
+
+            {uploadingVideo ? (
+              <p className="mt-3 text-sm font-bold text-gray-500">Caricamento video...</p>
+            ) : null}
+
+            {form.video_path ? (
+              <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
+                Video caricato
+              </p>
+            ) : null}
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
