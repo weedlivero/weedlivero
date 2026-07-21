@@ -3,16 +3,16 @@ import { notFound } from 'next/navigation';
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
 import ProductGrid from '@/components/ProductGrid';
-import { categories } from '@/data/categories';
+import { getCategoryBySlug } from '@/lib/categories';
 import { getProducts } from '@/lib/products';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function CategoryPage({ params }) {
-  const category = categories.find((item) => item.slug === params.slug);
+  const category = await getCategoryBySlug(params.slug);
 
-  if (!category || category.active === false) {
+  if (!category || category.active !== true) {
     notFound();
   }
 

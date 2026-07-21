@@ -2,12 +2,20 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file');
-    const folder = formData.get('folder') || 'images';
+    const { fileName, fileType, folder = 'images' } = await request.json();
 
-    if (!file) {
-      return Response.json({ error: 'File mancante' }, { status: 400 });
+    if (!fileName) {
+      return Response.json(
+        { error: 'Nome del file mancante' },
+        { status: 400 }
+      );
+    }
+
+    if (!['images', 'videos'].includes(folder)) {
+      return Response.json(
+        { error: 'Cartella non valida' },
+        { status: 400 }
+      );
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,26 +28,55 @@ export async function POST(request) {
       );
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      }
+    );
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${Date.now()}-${Math.random()
+    const extension =
+      fileName.includes('.')
+        ? fileName.split('.').pop().toLowerCase()
+        : folder === 'videos'
+          ? 'mp4'
+          : 'jpg';
+
+    const safeExtension = extension.replace(/[^a-z0-9]/g, '');
+
+    const path = `${folder}/${Date.now()}-${Math.random()
       .toString(36)
-      .slice(2)}.${fileExt}`;
+      .slice(2)}.${safeExtension}`;
 
-    const { error } = await supabaseAdmin.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('product-media')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+      .createSignedUploadUrl(path);
 
     if (error) {
-      return Response.json({ error: error.message }, { status: 500 });
+      return Response.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
-    return Response.json({ path: fileName });
+    return Response.json({
+      path,
+      token: data.token,
+      contentType: fileType || null,
+    });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Errore creazione upload',
+      },
+      { status: 500 }
+    );
   }
 }

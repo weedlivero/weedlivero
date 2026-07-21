@@ -1,6 +1,7 @@
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
 import TelegramButton from '@/components/TelegramButton';
+import ProductImageLightbox from '@/components/ProductImageLightbox';
 import { getProduct } from '@/lib/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -28,17 +29,10 @@ export default async function ProductPage({ params }) {
         </Link>
 
         <article className="mt-5 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-md">
-          <div className="flex h-80 items-center justify-center bg-gradient-to-br from-gray-100 to-green-50 text-7xl">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span>🌿</span>
-            )}
-          </div>
+          <ProductImageLightbox
+            imageUrl={product.image_url}
+            productName={product.name}
+          />
 
           <div className="p-6">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -60,35 +54,42 @@ export default async function ProductPage({ params }) {
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {product.thc && (
+              {product.thc ? (
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs font-bold uppercase text-gray-400">THC</p>
+                  <p className="text-xs font-bold uppercase text-gray-400">
+                    THC
+                  </p>
+
                   <p className="mt-1 text-xl font-black text-gray-900">
                     {product.thc}
                   </p>
                 </div>
-              )}
+              ) : null}
 
-              {product.cbd && (
+              {product.cbd ? (
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs font-bold uppercase text-gray-400">CBD</p>
+                  <p className="text-xs font-bold uppercase text-gray-400">
+                    CBD
+                  </p>
+
                   <p className="mt-1 text-xl font-black text-gray-900">
                     {product.cbd}
                   </p>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {product.video_url && (
+            {product.video_url ? (
               <div className="mt-6 overflow-hidden rounded-2xl bg-black">
                 <video
                   src={product.video_url}
                   controls
                   preload="metadata"
+                  playsInline
                   className="w-full"
                 />
               </div>
-            )}
+            ) : null}
           </div>
         </article>
 
