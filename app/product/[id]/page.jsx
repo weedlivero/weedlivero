@@ -9,6 +9,28 @@ import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+function getCategoryFallback(category) {
+  switch (category) {
+    case 'weed':
+      return '🌿';
+
+    case 'hash':
+      return '🟫';
+
+    case 'concentrate':
+      return '💧';
+
+    case 'edibles':
+      return '🍬';
+
+    case 'vapes':
+      return '💨';
+
+    default:
+      return '📦';
+  }
+}
+
 export default async function ProductPage({ params }) {
   const product = await getProduct(params.id);
 
@@ -32,6 +54,7 @@ export default async function ProductPage({ params }) {
           <ProductImageLightbox
             imageUrl={product.image_url}
             productName={product.name}
+            fallback={getCategoryFallback(product.category)}
           />
 
           <div className="p-6">

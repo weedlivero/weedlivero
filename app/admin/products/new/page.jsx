@@ -168,7 +168,8 @@ export default function NewProductPage() {
         }
       }
 
-      window.location.href = '/admin/products';
+      router.push('/admin');
+router.refresh();
     } catch (error) {
       console.error('Errore salvataggio prodotto:', error);
 
@@ -189,6 +190,15 @@ export default function NewProductPage() {
       <Header title="Nuovo prodotto" />
 
       <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
+        <div className="mb-6">
+  <button
+    type="button"
+    onClick={() => router.push('/admin')}
+    className="text-sm font-bold text-gray-500 transition hover:text-green-600"
+  >
+    ← Torna alla Dashboard
+  </button>
+</div>
         <form onSubmit={save} className="space-y-5">
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h1 className="text-3xl font-black text-gray-900">
