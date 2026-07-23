@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import AdminGuard from '@/components/AdminGuard';
 
 export default function AdminCategoriesPage() {
+  const router = useRouter();
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingSlug, setUpdatingSlug] = useState('');
@@ -72,14 +74,26 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  function goToDashboard() {
+    router.push('/admin');
+
+    setTimeout(() => {
+      router.refresh();
+    }, 100);
+  }
+
   return (
     <AdminGuard>
       <Header title="Categorie" />
 
       <main className="mx-auto max-w-5xl px-5 py-8">
-        <Link href="/admin" className="text-sm font-bold text-gray-500">
+        <button
+          type="button"
+          onClick={goToDashboard}
+          className="text-sm font-bold text-gray-500 transition hover:text-green-700"
+        >
           ← Torna alla dashboard
-        </Link>
+        </button>
 
         <div className="mt-6">
           <h1 className="text-4xl font-black text-gray-900">
