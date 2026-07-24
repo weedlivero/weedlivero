@@ -1,6 +1,8 @@
+import RequestListBar from '@/components/RequestListBar';
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
 import TelegramButton from '@/components/TelegramButton';
+import AddToRequestListButton from '@/components/AddToRequestListButton';
 import ProductImageLightbox from '@/components/ProductImageLightbox';
 import { getProduct } from '@/lib/products';
 import Link from 'next/link';
@@ -114,10 +116,17 @@ export default async function ProductPage({ params }) {
               </div>
             ) : null}
           </div>
-        </article>
+                </article>
 
-        <TelegramButton />
+        <div className="mt-6">
+          <AddToRequestListButton product={product} />
+        </div>
+
+        <div className="mt-4">
+          <TelegramButton />
+        </div>
       </main>
+      <RequestListBar />
     </AccessGate>
   );
 }
