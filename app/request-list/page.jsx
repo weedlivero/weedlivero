@@ -4,26 +4,50 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import TelegramButton from '@/components/TelegramButton';
+import RequestContactButtons from '@/components/RequestContactButtons';
 import {
   clearRequestList,
   getRequestList,
   removeProductFromRequestList,
 } from '@/lib/requestList';
 
-function getCategoryFallback(category) {
+function getCategoryMeta(category) {
   switch (category) {
     case 'weed':
-      return '🌿';
+      return {
+        emoji: '🌿',
+        label: 'Weed',
+      };
+
     case 'hash':
-      return '🟫';
+      return {
+        emoji: '🟫',
+        label: 'Hash',
+      };
+
     case 'concentrate':
-      return '💧';
+      return {
+        emoji: '💧',
+        label: 'Concentrate',
+      };
+
     case 'edibles':
-      return '🍬';
+      return {
+        emoji: '🍬',
+        label: 'Edibles',
+      };
+
     case 'vapes':
-      return '💨';
+      return {
+        emoji: '💨',
+        label: 'Vapes',
+      };
+
     default:
-      return '📦';
+      return {
+        emoji: '📦',
+        label: 'Prodotto',
+      };
   }
 }
 
@@ -98,60 +122,76 @@ export default function RequestListPage() {
         ) : (
           <>
             <section className="mt-8 space-y-4">
-              {products.map((product) => (
-                <article
-                  key={product.id}
-                  className="flex items-center gap-4 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
-                >
-                  <Link
-                    href={`/product/${product.id}`}
-                    className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-3xl"
+              {products.map((product) => {
+                const category = getCategoryMeta(product.category);
+
+                return (
+                  <article
+                    key={product.id}
+                    className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
                   >
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span>
-                        {getCategoryFallback(product.category)}
-                      </span>
-                    )}
-                  </Link>
+                    <div className="flex items-start gap-4">
+                      <Link
+                        href={`/product/${product.id}`}
+                        className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-4xl"
+                      >
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span>{category.emoji}</span>
+                        )}
+                      </Link>
 
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/product/${product.id}`}
-                      className="block"
-                    >
-                      <h2 className="truncate text-lg font-black text-gray-900">
-                        {product.name}
-                      </h2>
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/product/${product.id}`}
+                          className="block"
+                        >
+                          <h2 className="text-lg font-black text-gray-900">
+                            {product.name}
+                          </h2>
 
-                      <p className="mt-1 truncate text-sm text-gray-500">
-                        {product.brand || 'Brand'}
+                          <p className="mt-1 text-sm font-bold text-green-700">
+                            {category.emoji} {category.label}
+                          </p>
+
+                          <p className="mt-1 text-sm text-gray-500">
+                            {product.brand || 'Brand'}
+                          </p>
+
+                          <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-400">
+                            Codice: {product.id}
+                          </p>
+                        </Link>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeProduct(product.id)}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-black text-red-600 transition active:scale-95"
+                        aria-label={`Rimuovi ${product.name}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {product.description ? (
+                      <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-gray-600">
+                        {product.description}
                       </p>
-
-                      <p className="mt-1 text-xs font-bold text-gray-400">
-                        {product.id}
-                      </p>
-                    </Link>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeProduct(product.id)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-black text-red-600 transition active:scale-95"
-                    aria-label={`Rimuovi ${product.name}`}
-                  >
-                    ×
-                  </button>
-                </article>
-              ))}
+                    ) : null}
+                  </article>
+                );
+              })}
             </section>
 
-            <section className="mt-8">
+            <RequestContactButtons products={products} />
+
+            <section className="mt-3">
               <button
                 type="button"
                 onClick={clearList}

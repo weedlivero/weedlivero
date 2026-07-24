@@ -8,13 +8,16 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
 
   const [settings, setSettings] = useState({
-    catalog_name: '',
-    welcome_message: '',
-    telegram_username: '',
-    telegram_phone: '',
-    signal_phone: '',
-    contact_email: '',
-  });
+  catalog_name: '',
+  catalog_url: '',
+  welcome_message: '',
+  telegram_enabled: true,
+  telegram_username: '',
+  telegram_phone: '',
+  signal_enabled: true,
+  signal_phone: '',
+  contact_email: '',
+});
 
   useEffect(() => {
     loadSettings();
@@ -117,6 +120,19 @@ export default function AdminSettingsPage() {
             <label className="font-bold">
               Messaggio di benvenuto
             </label>
+            <div>
+  <label className="font-bold">
+    URL catalogo
+  </label>
+
+  <input
+    className="mt-2 w-full rounded-2xl border p-4"
+    value={settings.catalog_url}
+    onChange={(e) =>
+      update('catalog_url', e.target.value)
+    }
+  />
+</div>
 
             <textarea
               className="mt-2 w-full rounded-2xl border p-4"
@@ -129,6 +145,20 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
+            <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+  <span className="font-bold">
+    Telegram attivo
+  </span>
+
+  <input
+    type="checkbox"
+    checked={settings.telegram_enabled}
+    onChange={(e) =>
+      update('telegram_enabled', e.target.checked)
+    }
+    className="h-5 w-5"
+  />
+</label>
             <label className="font-bold">
               Username Telegram
             </label>
@@ -157,6 +187,20 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
+            <label className="mt-4 flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+  <span className="font-bold">
+    Signal attivo
+  </span>
+
+  <input
+    type="checkbox"
+    checked={settings.signal_enabled}
+    onChange={(e) =>
+      update('signal_enabled', e.target.checked)
+    }
+    className="h-5 w-5"
+  />
+</label>
             <label className="font-bold">
               Numero Signal
             </label>
