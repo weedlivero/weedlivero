@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase, hasSupabaseConfig } from '@/lib/supabase';
 import { demoProducts } from '@/data/demoProducts';
 import { categories } from '@/data/categories';
@@ -11,6 +11,9 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
 
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
 
@@ -31,141 +34,301 @@ export default function EditProductPage() {
   });
 
   function updateField(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
   }
 
-  async function uploadFile(file, folder = 'images') {
-    if (!file) return;
+  useEffect(() => {
+    async function loadProduct() {
+      try {
+        setLoading(true);
+
+        if (!hasSupabaseConfig || !supabase) {
+          const product = demoProducts.find(
+            (item) => item.id === params.id
+          );
+
+          if (product) {
+            setForm((current) => ({
+              ...current,
+              ...product,
+            }));
+          }
+
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', params.id)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setForm((current) => ({
+            ...current,
+            ...data,
+          }));
+        }
+      } catch (error) {
+        console.error('Errore caricamento prodotto:', error);
+
+        alert(
+          error instanceof Error
+            ? error.message
+            : 'Errore durante il caricamento del prodotto'
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.id) {
+      loadProduct();
+    }
+  }, [params.id]);
+
+  async function readJsonResponse(response) {
+    const responseText = await response.text();
+
+    if (!responseText) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        `Risposta non valida dal server (${response.status})`
+      );
+    }
+  }
+
+  async function uploadFile(file, folder) {
+    if (!file) {
+      return;
+    }
 
     const isVideo = folder === 'videos';
 
-    if (isVideo) setUploadingVideo(true);
-    else setUploadingImage(true);
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', folder);
-
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (isVideo) setUploadingVideo(false);
-    else setUploadingImage(false);
-
-    if (!response.ok) {
-      alert(result.error || 'Errore upload file');
+    if (!hasSupabaseConfig || !supabase) {
+      alert('Configurazione Supabase mancante');
       return;
     }
 
     if (isVideo) {
-      updateField('video_path', result.path);
-      updateField('video_url', '');
-
-      if (hasSupabaseConfig) {
-        const { error } = await supabase
-          .from('products')
-          .update({
-            video_path: result.path,
-            video_url: '',
-          })
-          .eq('id', params.id);
-
-        if (error) {
-          alert(error.message);
-          return;
-        }
-      }
-
-      alert('Video aggiornato correttamente');
+      setUploadingVideo(true);
     } else {
-      updateField('image_path', result.path);
-      updateField('image_url', '');
+      setUploadingImage(true);
+    }
 
-      if (hasSupabaseConfig) {
-        const { error } = await supabase
-          .from('products')
-          .update({
-            image_path: result.path,
+    try {
+      /*
+       * L'API genera solamente il token temporaneo.
+       * Il file viene poi caricato direttamente su Supabase.
+       */
+      const authorizationResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          folder,
+        }),
+      });
+
+      const authorizationResult =
+        await readJsonResponse(authorizationResponse);
+
+      if (!authorizationResponse.ok) {
+        throw new Error(
+          authorizationResult.error ||
+            'Errore durante la preparazione del caricamento'
+        );
+      }
+
+      const { path, token } = authorizationResult;
+
+      if (!path || !token) {
+        throw new Error('Autorizzazione upload non valida');
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-media')
+        .uploadToSignedUrl(path, token, file, {
+          contentType: file.type || undefined,
+          cacheControl: '3600',
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const mediaUpdate = isVideo
+        ? {
+            video_path: path,
+            video_url: '',
+          }
+        : {
+            image_path: path,
             image_url: '',
-          })
-          .eq('id', params.id);
+          };
 
-        if (error) {
-          alert(error.message);
-          return;
-        }
-      }
-
-      alert('Immagine aggiornata correttamente');
-    }
-  }
-
-  useEffect(() => {
-    async function load() {
-      if (!hasSupabaseConfig) {
-        const product = demoProducts.find((p) => p.id === params.id);
-        if (product) setForm((current) => ({ ...current, ...product }));
-        return;
-      }
-
-      const { data } = await supabase
+      const { error: productUpdateError } = await supabase
         .from('products')
-        .select('*')
-        .eq('id', params.id)
-        .single();
-
-      if (data) setForm((current) => ({ ...current, ...data }));
-    }
-
-    load();
-  }, [params.id]);
-
-  async function save(e) {
-    e.preventDefault();
-
-    if (hasSupabaseConfig) {
-      const { error } = await supabase
-        .from('products')
-        .update(form)
+        .update(mediaUpdate)
         .eq('id', params.id);
 
-      if (error) {
-        alert(error.message);
-        return;
+      if (productUpdateError) {
+        throw productUpdateError;
+      }
+
+      setForm((current) => ({
+        ...current,
+        ...mediaUpdate,
+      }));
+
+      alert(
+        isVideo
+          ? 'Video aggiornato correttamente'
+          : 'Immagine aggiornata correttamente'
+      );
+    } catch (error) {
+      console.error('Errore upload:', error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Errore durante il caricamento del file'
+      );
+    } finally {
+      if (isVideo) {
+        setUploadingVideo(false);
+      } else {
+        setUploadingImage(false);
       }
     }
-
-    window.location.href = '/admin';
   }
 
-  async function remove() {
-    const confirmDelete = window.confirm('Vuoi eliminare questo prodotto?');
-    if (!confirmDelete) return;
+  async function save(event) {
+    event.preventDefault();
 
-    const response = await fetch('/api/delete-product', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: params.id,
-        image_path: form.image_path,
-        video_path: form.video_path,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.error || 'Errore eliminazione prodotto');
+    if (uploadingImage || uploadingVideo) {
+      alert('Attendi la fine del caricamento dei file');
       return;
     }
 
-    window.location.href = '/admin';
+    try {
+      setSaving(true);
+
+      const productData = {
+        ...form,
+        name: form.name.trim(),
+        brand: form.brand.trim(),
+        description: form.description.trim(),
+        thc: form.thc.trim(),
+        cbd: form.cbd.trim(),
+      };
+
+      if (hasSupabaseConfig && supabase) {
+        const { error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', params.id);
+
+        if (error) {
+          throw error;
+        }
+      }
+
+      router.push('/admin');
+      router.refresh();
+    } catch (error) {
+      console.error('Errore aggiornamento prodotto:', error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Errore durante l’aggiornamento del prodotto'
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    const confirmDelete = window.confirm(
+      'Vuoi eliminare questo prodotto?'
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+
+      const response = await fetch('/api/delete-product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: params.id,
+          image_path: form.image_path,
+          video_path: form.video_path,
+        }),
+      });
+
+      const result = await readJsonResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || 'Errore eliminazione prodotto'
+        );
+      }
+
+      router.push('/admin');
+      router.refresh();
+    } catch (error) {
+      console.error('Errore eliminazione prodotto:', error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Errore durante l’eliminazione del prodotto'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const operationInProgress =
+    saving ||
+    deleting ||
+    uploadingImage ||
+    uploadingVideo;
+
+  if (loading) {
+    return (
+      <>
+        <Header title="Modifica prodotto" />
+
+        <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
+          <div className="rounded-3xl bg-white p-8 text-center shadow-md">
+            Caricamento prodotto...
+          </div>
+        </main>
+      </>
+    );
   }
 
   return (
@@ -173,6 +336,16 @@ export default function EditProductPage() {
       <Header title="Modifica prodotto" />
 
       <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => router.push('/admin')}
+            className="text-sm font-bold text-gray-500 transition hover:text-green-600"
+          >
+            ← Torna alla Dashboard
+          </button>
+        </div>
+
         <form onSubmit={save} className="space-y-5">
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h1 className="text-3xl font-black text-gray-900">
@@ -185,7 +358,7 @@ export default function EditProductPage() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <input
-                className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                className="rounded-2xl border border-gray-200 p-4 outline-none"
                 placeholder="Codice prodotto"
                 value={form.id || ''}
                 disabled
@@ -195,7 +368,9 @@ export default function EditProductPage() {
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="Nome prodotto"
                 value={form.name || ''}
-                onChange={(e) => updateField('name', e.target.value)}
+                onChange={(event) =>
+                  updateField('name', event.target.value)
+                }
                 required
               />
 
@@ -203,35 +378,58 @@ export default function EditProductPage() {
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="Brand"
                 value={form.brand || ''}
-                onChange={(e) => updateField('brand', e.target.value)}
+                onChange={(event) =>
+                  updateField('brand', event.target.value)
+                }
               />
 
               <select
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 value={form.category || 'weed'}
-                onChange={(e) => updateField('category', e.target.value)}
+                onChange={(event) =>
+                  updateField('category', event.target.value)
+                }
               >
-                {categories.map((category) => (
-                  <option key={category.slug} value={category.slug}>
-                    {category.title}
-                  </option>
-                ))}
+                {categories
+                  .filter(
+                    (category) =>
+                      category.active !== false ||
+                      category.slug === form.category
+                  )
+                  .map((category) => (
+                    <option
+                      key={category.slug}
+                      value={category.slug}
+                    >
+                      {category.title}
+                    </option>
+                  ))}
               </select>
             </div>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">Media</h2>
+            <h2 className="text-xl font-black text-gray-900">
+              Media
+            </h2>
 
-            <label className="mt-4 block text-sm font-bold text-gray-700">
+            <p className="mt-1 text-sm text-gray-500">
+              Immagini e video vengono caricati direttamente nello
+              Storage privato.
+            </p>
+
+            <label className="mt-5 block text-sm font-bold text-gray-700">
               Immagine prodotto
             </label>
 
             <input
               type="file"
               accept="image/*"
-              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
-              onChange={(e) => uploadFile(e.target.files[0], 'images')}
+              disabled={uploadingImage}
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 disabled:cursor-not-allowed disabled:opacity-50"
+              onChange={(event) =>
+                uploadFile(event.target.files?.[0], 'images')
+              }
             />
 
             {uploadingImage ? (
@@ -242,7 +440,7 @@ export default function EditProductPage() {
 
             {form.image_path ? (
               <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
-                Immagine caricata
+                ✓ Immagine caricata
               </p>
             ) : null}
 
@@ -253,8 +451,11 @@ export default function EditProductPage() {
             <input
               type="file"
               accept="video/*"
-              className="mt-2 w-full rounded-2xl border border-gray-200 p-4"
-              onChange={(e) => uploadFile(e.target.files[0], 'videos')}
+              disabled={uploadingVideo}
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 disabled:cursor-not-allowed disabled:opacity-50"
+              onChange={(event) =>
+                uploadFile(event.target.files?.[0], 'videos')
+              }
             />
 
             {uploadingVideo ? (
@@ -265,19 +466,23 @@ export default function EditProductPage() {
 
             {form.video_path ? (
               <p className="mt-3 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-700">
-                Video caricato
+                ✓ Video caricato
               </p>
             ) : null}
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
-            <h2 className="text-xl font-black text-gray-900">Dettagli</h2>
+            <h2 className="text-xl font-black text-gray-900">
+              Dettagli
+            </h2>
 
             <textarea
               className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
               placeholder="Descrizione prodotto"
               value={form.description || ''}
-              onChange={(e) => updateField('description', e.target.value)}
+              onChange={(event) =>
+                updateField('description', event.target.value)
+              }
             />
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -285,14 +490,18 @@ export default function EditProductPage() {
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="THC"
                 value={form.thc || ''}
-                onChange={(e) => updateField('thc', e.target.value)}
+                onChange={(event) =>
+                  updateField('thc', event.target.value)
+                }
               />
 
               <input
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="CBD"
                 value={form.cbd || ''}
-                onChange={(e) => updateField('cbd', e.target.value)}
+                onChange={(event) =>
+                  updateField('cbd', event.target.value)
+                }
               />
             </div>
           </section>
@@ -304,21 +513,31 @@ export default function EditProductPage() {
 
             <div className="mt-5 space-y-3">
               <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
-                <span className="font-bold text-gray-800">Prodotto attivo</span>
+                <span className="font-bold text-gray-800">
+                  Prodotto attivo
+                </span>
+
                 <input
                   type="checkbox"
                   checked={Boolean(form.active)}
-                  onChange={(e) => updateField('active', e.target.checked)}
+                  onChange={(event) =>
+                    updateField('active', event.target.checked)
+                  }
                   className="h-5 w-5"
                 />
               </label>
 
               <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
-                <span className="font-bold text-gray-800">In evidenza</span>
+                <span className="font-bold text-gray-800">
+                  In evidenza
+                </span>
+
                 <input
                   type="checkbox"
                   checked={Boolean(form.featured)}
-                  onChange={(e) => updateField('featured', e.target.checked)}
+                  onChange={(event) =>
+                    updateField('featured', event.target.checked)
+                  }
                   className="h-5 w-5"
                 />
               </label>
@@ -328,17 +547,25 @@ export default function EditProductPage() {
           <div className="sticky bottom-4 z-10 space-y-3">
             <button
               type="submit"
-              className="w-full rounded-2xl bg-green-600 p-4 text-lg font-black text-white shadow-lg shadow-green-200 active:scale-[0.98]"
+              disabled={operationInProgress}
+              className="w-full rounded-2xl bg-green-600 p-4 text-lg font-black text-white shadow-lg shadow-green-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-400 disabled:shadow-none"
             >
-              Aggiorna prodotto
+              {saving
+                ? 'Aggiornamento...'
+                : uploadingImage || uploadingVideo
+                  ? 'Attendi il caricamento...'
+                  : 'Aggiorna prodotto'}
             </button>
 
             <button
               type="button"
               onClick={remove}
-              className="w-full rounded-2xl bg-red-500 p-4 text-lg font-black text-white shadow-lg shadow-red-200 active:scale-[0.98]"
+              disabled={operationInProgress}
+              className="w-full rounded-2xl bg-red-500 p-4 text-lg font-black text-white shadow-lg shadow-red-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-400 disabled:shadow-none"
             >
-              Elimina prodotto
+              {deleting
+                ? 'Eliminazione...'
+                : 'Elimina prodotto'}
             </button>
           </div>
         </form>
