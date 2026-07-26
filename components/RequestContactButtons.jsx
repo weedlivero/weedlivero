@@ -123,7 +123,7 @@ function buildMessage(products, catalogName, catalogUrl) {
 export default function RequestContactButtons({ products }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [signalCopied, setSignalCopied] = useState(false);
+  const [showSignalToast, setShowSignalToast] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -195,36 +195,48 @@ export default function RequestContactButtons({ products }) {
     );
   }
 
-  async function openSignal() {
-    if (!signalAvailable) {
-      return;
-    }
+   async function openSignal() {
+  if (!signalAvailable) {
+    return;
+  }
 
-    try {
-      await navigator.clipboard.writeText(message);
-      setSignalCopied(true);
+  try {
+    await navigator.clipboard.writeText(message);
 
-      window.setTimeout(() => {
-        setSignalCopied(false);
-      }, 2500);
-    } catch (error) {
-      console.error('Errore copia messaggio:', error);
+    setShowSignalToast(true);
 
-      alert(
-        'Non è stato possibile copiare automaticamente il messaggio.'
-      );
-    }
+    window.setTimeout(() => {
+      setShowSignalToast(false);
+    }, 3000);
+  } catch (error) {
+    console.error('Errore copia messaggio:', error);
 
-    const signalUrl = settings.signal_url?.trim()
-      ? settings.signal_url.trim()
-      : `https://signal.me/#p/${encodeURIComponent(signalPhone)}`;
-
-    window.open(
-      signalUrl,
-      '_blank',
-      'noopener,noreferrer'
+    alert(
+      'Non è stato possibile copiare automaticamente il messaggio.'
     );
   }
+
+  const customSignalUrl = settings.signal_url?.trim();
+
+const isMobile =
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+const signalUrl = customSignalUrl
+  ? customSignalUrl
+  : isMobile
+    ? `https://signal.me/#p/${encodeURIComponent(signalPhone)}`
+    : `sgnl://signal.me/#p/${encodeURIComponent(signalPhone)}`;
+
+if (isMobile || customSignalUrl) {
+  window.open(
+    signalUrl,
+    '_blank',
+    'noopener,noreferrer'
+  );
+} else {
+  window.location.href = signalUrl;
+}
+}
 
   if (!telegramAvailable && !signalAvailable) {
     return (
@@ -247,16 +259,24 @@ export default function RequestContactButtons({ products }) {
       ) : null}
 
       {signalAvailable ? (
-        <button
-          type="button"
-          onClick={openSignal}
-          className="w-full rounded-2xl bg-blue-600 p-4 font-black text-white transition active:scale-[0.98]"
-        >
-          {signalCopied
-            ? '✓ Messaggio copiato — apri Signal'
-            : '🔵 Invia con Signal'}
-        </button>
-      ) : null}
+  <>
+    <button
+      type="button"
+      onClick={openSignal}
+      className="w-full rounded-2xl bg-blue-600 p-4 font-black text-white transition active:scale-[0.98]"
+    >
+      🔵 Invia con Signal
+    </button>
+
+    {showSignalToast ? (
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
+        ✅ Messaggio copiato negli appunti.
+        <br />
+        Apri Signal e premi <strong>Incolla</strong>.
+      </div>
+    ) : null}
+  </>
+) : null}
     </section>
   );
 }
