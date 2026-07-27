@@ -1,4 +1,5 @@
 import './globals.css';
+import TelegramButton from '@/components/TelegramButton';
 
 export const metadata = {
   title: 'Weedlivero',
@@ -8,7 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="it">
-      <body>{children}</body>
+      <body>
+        {children}
+        <TelegramButton />
+      </body>
     </html>
   );
 }
