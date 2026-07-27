@@ -40,6 +40,22 @@ export default function EditProductPage() {
     }));
   }
 
+  async function readJsonResponse(response) {
+    const responseText = await response.text();
+
+    if (!responseText) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        `Risposta non valida dal server (${response.status})`
+      );
+    }
+  }
+
   useEffect(() => {
     async function loadProduct() {
       try {
@@ -60,20 +76,26 @@ export default function EditProductPage() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('id', params.id)
-          .single();
+        const response = await fetch(
+          `/api/products/${encodeURIComponent(params.id)}`,
+          {
+            cache: 'no-store',
+          }
+        );
 
-        if (error) {
-          throw error;
+        const result = await readJsonResponse(response);
+
+        if (!response.ok) {
+          throw new Error(
+            result.error ||
+              'Errore durante il caricamento del prodotto'
+          );
         }
 
-        if (data) {
+        if (result.product) {
           setForm((current) => ({
             ...current,
-            ...data,
+            ...result.product,
           }));
         }
       } catch (error) {
@@ -94,20 +116,42 @@ export default function EditProductPage() {
     }
   }, [params.id]);
 
-  async function readJsonResponse(response) {
-    const responseText = await response.text();
+  function prepareProductData(sourceForm) {
+    return {
+      ...sourceForm,
+      name: String(sourceForm.name || '').trim(),
+      brand: String(sourceForm.brand || '').trim(),
+      category: String(sourceForm.category || '').trim(),
+      description: String(sourceForm.description || '').trim(),
+      thc: String(sourceForm.thc || '').trim(),
+      cbd: String(sourceForm.cbd || '').trim(),
+      active: sourceForm.active === true,
+      featured: sourceForm.featured === true,
+    };
+  }
 
-    if (!responseText) {
-      return {};
-    }
+  async function updateProduct(productData) {
+    const response = await fetch(
+      `/api/products/${encodeURIComponent(params.id)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      }
+    );
 
-    try {
-      return JSON.parse(responseText);
-    } catch {
+    const result = await readJsonResponse(response);
+
+    if (!response.ok) {
       throw new Error(
-        `Risposta non valida dal server (${response.status})`
+        result.error ||
+          'Errore durante l’aggiornamento del prodotto'
       );
     }
+
+    return result.product;
   }
 
   async function uploadFile(file, folder) {
@@ -129,10 +173,6 @@ export default function EditProductPage() {
     }
 
     try {
-      /*
-       * L'API genera solamente il token temporaneo.
-       * Il file viene poi caricato direttamente su Supabase.
-       */
       const authorizationResponse = await fetch('/api/upload', {
         method: 'POST',
         headers: {
@@ -182,18 +222,18 @@ export default function EditProductPage() {
             image_url: '',
           };
 
-      const { error: productUpdateError } = await supabase
-        .from('products')
-        .update(mediaUpdate)
-        .eq('id', params.id);
+      const updatedForm = {
+        ...form,
+        ...mediaUpdate,
+      };
 
-      if (productUpdateError) {
-        throw productUpdateError;
-      }
+      const updatedProduct = await updateProduct(
+        prepareProductData(updatedForm)
+      );
 
       setForm((current) => ({
         ...current,
-        ...mediaUpdate,
+        ...updatedProduct,
       }));
 
       alert(
@@ -229,28 +269,17 @@ export default function EditProductPage() {
     try {
       setSaving(true);
 
-      const productData = {
-        ...form,
-        name: form.name.trim(),
-        brand: form.brand.trim(),
-        description: form.description.trim(),
-        thc: form.thc.trim(),
-        cbd: form.cbd.trim(),
-      };
+      const productData = prepareProductData(form);
+      const updatedProduct = await updateProduct(productData);
 
-      if (hasSupabaseConfig && supabase) {
-        const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', params.id);
+      setForm((current) => ({
+        ...current,
+        ...updatedProduct,
+      }));
 
-        if (error) {
-          throw error;
-        }
-      }
+      alert('Prodotto aggiornato correttamente.');
 
-      router.push('/admin');
-      router.refresh();
+      window.location.href = '/admin';
     } catch (error) {
       console.error('Errore aggiornamento prodotto:', error);
 
@@ -296,8 +325,7 @@ export default function EditProductPage() {
         );
       }
 
-      router.push('/admin');
-      router.refresh();
+      window.location.href = '/admin';
     } catch (error) {
       console.error('Errore eliminazione prodotto:', error);
 
