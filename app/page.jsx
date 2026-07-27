@@ -1,3 +1,4 @@
+import UserPopup from '@/components/UserPopup';
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
 import CategoryCard from '@/components/CategoryCard';
@@ -11,10 +12,14 @@ export const revalidate = 0;
 export default async function HomePage() {
   const categories = await getActiveCategories();
   const products = await getProducts();
-  const featuredProducts = products.filter((product) => product.featured);
+  const featuredProducts = products.filter(
+    (product) => product.featured
+  );
 
   return (
     <AccessGate>
+      <UserPopup />
+
       <main className="min-h-screen bg-gradient-to-b from-white to-green-50 px-5 py-6">
         <Header />
 

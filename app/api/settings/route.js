@@ -44,7 +44,9 @@ export async function GET() {
     }
 
     return Response.json(
-      { settings: data },
+      {
+        settings: data,
+      },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -92,6 +94,12 @@ export async function PATCH(request) {
 
       whatsapp_phone: body.whatsapp_phone ?? '',
       contact_email: body.contact_email ?? '',
+
+      popup_enabled: body.popup_enabled === true,
+      popup_title: body.popup_title ?? '',
+      popup_message: body.popup_message ?? '',
+      popup_button_text:
+        body.popup_button_text?.trim() || 'Ho capito',
 
       logo_url: body.logo_url ?? '',
       primary_color: body.primary_color ?? 'green',
