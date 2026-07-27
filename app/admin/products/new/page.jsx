@@ -19,6 +19,7 @@ export default function NewProductPage() {
     brand: '',
     category: 'weed',
     description: '',
+    notes: '',
     image_url: '',
     image_path: '',
     video_url: '',
@@ -37,7 +38,9 @@ export default function NewProductPage() {
   }
 
   async function uploadFile(file, folder) {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const isVideo = folder === 'videos';
 
@@ -69,7 +72,8 @@ export default function NewProductPage() {
         }),
       });
 
-      const authorizationResult = await authorizationResponse.json();
+      const authorizationResult =
+        await authorizationResponse.json();
 
       if (!authorizationResponse.ok) {
         throw new Error(
@@ -141,10 +145,13 @@ export default function NewProductPage() {
     try {
       const productData = {
         ...form,
-        id: form.id.trim() || `${form.category}-${Date.now()}`,
+        id:
+          form.id.trim() ||
+          `${form.category}-${Date.now()}`,
         name: form.name.trim(),
         brand: form.brand.trim(),
         description: form.description.trim(),
+        notes: form.notes.trim(),
         thc: form.thc.trim(),
         cbd: form.cbd.trim(),
       };
@@ -157,7 +164,9 @@ export default function NewProductPage() {
         if (error) {
           if (
             error.code === '23505' ||
-            error.message?.toLowerCase().includes('duplicate key')
+            error.message
+              ?.toLowerCase()
+              .includes('duplicate key')
           ) {
             throw new Error(
               'Esiste già un prodotto con questo codice. Aprilo dall’elenco e modificalo.'
@@ -169,9 +178,12 @@ export default function NewProductPage() {
       }
 
       router.push('/admin');
-router.refresh();
+      router.refresh();
     } catch (error) {
-      console.error('Errore salvataggio prodotto:', error);
+      console.error(
+        'Errore salvataggio prodotto:',
+        error
+      );
 
       alert(
         error instanceof Error
@@ -183,7 +195,8 @@ router.refresh();
     }
   }
 
-  const uploadInProgress = uploadingImage || uploadingVideo;
+  const uploadInProgress =
+    uploadingImage || uploadingVideo;
 
   return (
     <>
@@ -191,14 +204,15 @@ router.refresh();
 
       <main className="mx-auto max-w-4xl px-5 pb-28 pt-8">
         <div className="mb-6">
-  <button
-    type="button"
-    onClick={() => router.push('/admin')}
-    className="text-sm font-bold text-gray-500 transition hover:text-green-600"
-  >
-    ← Torna alla Dashboard
-  </button>
-</div>
+          <button
+            type="button"
+            onClick={() => router.push('/admin')}
+            className="text-sm font-bold text-gray-500 transition hover:text-green-600"
+          >
+            ← Torna alla Dashboard
+          </button>
+        </div>
+
         <form onSubmit={save} className="space-y-5">
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h1 className="text-3xl font-black text-gray-900">
@@ -242,11 +256,17 @@ router.refresh();
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 value={form.category}
                 onChange={(event) =>
-                  updateField('category', event.target.value)
+                  updateField(
+                    'category',
+                    event.target.value
+                  )
                 }
               >
                 {categories
-                  .filter((category) => category.active !== false)
+                  .filter(
+                    (category) =>
+                      category.active !== false
+                  )
                   .map((category) => (
                     <option
                       key={category.slug}
@@ -265,8 +285,8 @@ router.refresh();
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Immagini e video vengono caricati direttamente nello
-              Storage privato.
+              Immagini e video vengono caricati direttamente
+              nello Storage privato.
             </p>
 
             <label className="mt-5 block text-sm font-bold text-gray-700">
@@ -279,7 +299,10 @@ router.refresh();
               disabled={uploadingImage}
               className="mt-2 w-full rounded-2xl border border-gray-200 p-4 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(event) =>
-                uploadFile(event.target.files?.[0], 'images')
+                uploadFile(
+                  event.target.files?.[0],
+                  'images'
+                )
               }
             />
 
@@ -305,7 +328,10 @@ router.refresh();
               disabled={uploadingVideo}
               className="mt-2 w-full rounded-2xl border border-gray-200 p-4 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(event) =>
-                uploadFile(event.target.files?.[0], 'videos')
+                uploadFile(
+                  event.target.files?.[0],
+                  'videos'
+                )
               }
             />
 
@@ -327,16 +353,54 @@ router.refresh();
               Dettagli
             </h2>
 
-            <textarea
-              className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
-              placeholder="Descrizione prodotto"
-              value={form.description}
-              onChange={(event) =>
-                updateField('description', event.target.value)
-              }
-            />
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-gray-700">
+                Descrizione
+              </label>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <textarea
+                className="mt-2 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Descrizione del prodotto"
+                value={form.description}
+                onChange={(event) =>
+                  updateField(
+                    'description',
+                    event.target.value
+                  )
+                }
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-gray-700">
+                Note e prezzi
+              </label>
+
+              <textarea
+                className="mt-2 min-h-40 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder={`Esempio:
+
+1 g — €10
+3 g — €25
+5 g — €40
+
+Disponibile fino a esaurimento.`}
+                value={form.notes}
+                onChange={(event) =>
+                  updateField(
+                    'notes',
+                    event.target.value
+                  )
+                }
+              />
+
+              <p className="mt-2 text-xs text-gray-400">
+                Questo testo apparirà solo nella scheda
+                completa del prodotto.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <input
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="THC"
@@ -372,7 +436,10 @@ router.refresh();
                   type="checkbox"
                   checked={form.active}
                   onChange={(event) =>
-                    updateField('active', event.target.checked)
+                    updateField(
+                      'active',
+                      event.target.checked
+                    )
                   }
                   className="h-5 w-5"
                 />
@@ -387,7 +454,10 @@ router.refresh();
                   type="checkbox"
                   checked={form.featured}
                   onChange={(event) =>
-                    updateField('featured', event.target.checked)
+                    updateField(
+                      'featured',
+                      event.target.checked
+                    )
                   }
                   className="h-5 w-5"
                 />

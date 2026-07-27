@@ -23,6 +23,7 @@ export default function EditProductPage() {
     brand: '',
     category: 'weed',
     description: '',
+    notes: '',
     image_url: '',
     image_path: '',
     video_url: '',
@@ -123,6 +124,7 @@ export default function EditProductPage() {
       brand: String(sourceForm.brand || '').trim(),
       category: String(sourceForm.category || '').trim(),
       description: String(sourceForm.description || '').trim(),
+      notes: String(sourceForm.notes || '').trim(),
       thc: String(sourceForm.thc || '').trim(),
       cbd: String(sourceForm.cbd || '').trim(),
       active: sourceForm.active === true,
@@ -504,16 +506,48 @@ export default function EditProductPage() {
               Dettagli
             </h2>
 
-            <textarea
-              className="mt-5 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
-              placeholder="Descrizione prodotto"
-              value={form.description || ''}
-              onChange={(event) =>
-                updateField('description', event.target.value)
-              }
-            />
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-gray-700">
+                Descrizione
+              </label>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <textarea
+                className="mt-2 min-h-32 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder="Descrizione del prodotto"
+                value={form.description || ''}
+                onChange={(event) =>
+                  updateField('description', event.target.value)
+                }
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-gray-700">
+                Informazioni aggiuntive
+              </label>
+
+              <textarea
+                className="mt-2 min-h-40 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+                placeholder={`Esempio:
+
+1 g — €10
+3 g — €25
+5 g — €40
+
+Disponibile fino a esaurimento.`}
+                value={form.notes || ''}
+                onChange={(event) =>
+                  updateField('notes', event.target.value)
+                }
+              />
+
+              <p className="mt-2 text-xs text-gray-400">
+                Questo testo apparirà solo nella scheda completa del
+                prodotto.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <input
                 className="rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
                 placeholder="THC"

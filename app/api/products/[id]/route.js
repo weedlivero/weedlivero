@@ -18,6 +18,7 @@ function getSupabaseAdmin() {
     },
   });
 }
+
 export async function GET(request, { params }) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -73,6 +74,7 @@ export async function GET(request, { params }) {
     );
   }
 }
+
 export async function PATCH(request, { params }) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -99,6 +101,7 @@ export async function PATCH(request, { params }) {
       brand: String(body.brand ?? '').trim(),
       category: String(body.category ?? '').trim(),
       description: String(body.description ?? '').trim(),
+      notes: String(body.notes ?? '').trim(),
       image_url: body.image_url ?? '',
       image_path: body.image_path ?? '',
       video_url: body.video_url ?? '',
@@ -107,7 +110,6 @@ export async function PATCH(request, { params }) {
       cbd: String(body.cbd ?? '').trim(),
       active: body.active === true,
       featured: body.featured === true,
-      
     };
 
     if (!updates.name) {

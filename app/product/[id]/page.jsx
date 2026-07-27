@@ -74,9 +74,29 @@ export default async function ProductPage({ params }) {
               {product.name}
             </h1>
 
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
-              {product.description}
-            </p>
+            {product.description ? (
+              <section className="mt-5">
+                <h2 className="text-sm font-black uppercase tracking-wide text-gray-400">
+                  Descrizione
+                </h2>
+
+                <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-gray-600">
+                  {product.description}
+                </p>
+              </section>
+            ) : null}
+
+            {product.notes ? (
+              <section className="mt-6 rounded-2xl bg-gray-50 p-5">
+                <h2 className="text-sm font-black uppercase tracking-wide text-green-600">
+                  Informazioni aggiuntive
+                </h2>
+
+                <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-gray-700">
+                  {product.notes}
+                </p>
+              </section>
+            ) : null}
 
             <div className="mt-6 grid grid-cols-2 gap-3">
               {product.thc ? (
@@ -116,7 +136,7 @@ export default async function ProductPage({ params }) {
               </div>
             ) : null}
           </div>
-                </article>
+        </article>
 
         <div className="mt-6">
           <AddToRequestListButton product={product} />
@@ -126,6 +146,7 @@ export default async function ProductPage({ params }) {
           <TelegramButton />
         </div>
       </main>
+
       <RequestListBar />
     </AccessGate>
   );
