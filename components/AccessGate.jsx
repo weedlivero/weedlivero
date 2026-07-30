@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const ACCESS_STORAGE_KEY = 'weedlivero_access';
@@ -22,10 +23,6 @@ export default function AccessGate({ children }) {
         storageError
       );
 
-      /*
-       * Se Telegram limita localStorage, mostriamo comunque
-       * regolarmente la schermata del codice.
-       */
       setAllowed(false);
     } finally {
       setChecked(true);
@@ -56,14 +53,10 @@ export default function AccessGate({ children }) {
     setError('');
   }
 
-  /*
-   * Evita che Next.js mostri una schermata incoerente
-   * mentre controlliamo l’accesso salvato.
-   */
   if (!checked) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-brand-soft to-emerald-100 px-5">
-        <p className="text-sm font-bold text-gray-500">
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-black to-emerald-950 px-5">
+        <p className="text-sm font-bold text-white/70">
           Caricamento...
         </p>
       </main>
@@ -75,20 +68,21 @@ export default function AccessGate({ children }) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-brand-soft to-emerald-100 px-5">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-black to-emerald-950 px-5 py-10">
       <form
         onSubmit={submit}
-        className="w-full max-w-sm rounded-[2rem] bg-white p-7 text-center shadow-soft"
+        className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-black/70 p-7 text-center shadow-2xl backdrop-blur-xl"
       >
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-green text-3xl font-black text-white">
-          W
-        </div>
+        <Image
+          src="/logo-weedlivero.png"
+          alt="Weedlivero"
+          width={520}
+          height={520}
+          priority
+          className="mx-auto h-auto w-full max-w-[280px]"
+        />
 
-        <h1 className="text-3xl font-black tracking-tight">
-          Weedlivero
-        </h1>
-
-        <p className="mt-2 text-gray-500">
+        <p className="mt-5 text-sm leading-relaxed text-white/70">
           Inserisci il codice di accesso per entrare nel catalogo
           privato.
         </p>
@@ -99,18 +93,18 @@ export default function AccessGate({ children }) {
           onChange={(event) => setCode(event.target.value)}
           placeholder="Codice di accesso"
           autoComplete="off"
-          className="mt-6 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-center text-lg font-semibold outline-none focus:ring-2 focus:ring-brand-green"
+          className="mt-6 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-4 text-center text-lg font-semibold text-white outline-none placeholder:text-white/40 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
         />
 
         {error ? (
-          <p className="mt-3 text-sm font-semibold text-red-500">
+          <p className="mt-3 text-sm font-semibold text-red-400">
             {error}
           </p>
         ) : null}
 
         <button
           type="submit"
-          className="mt-5 w-full rounded-2xl bg-brand-green px-5 py-4 text-lg font-bold text-white shadow-lg shadow-emerald-200 transition active:scale-[0.98]"
+          className="mt-5 w-full rounded-2xl bg-emerald-600 px-5 py-4 text-lg font-bold text-white shadow-lg shadow-emerald-950/50 transition active:scale-[0.98]"
         >
           Entra
         </button>
