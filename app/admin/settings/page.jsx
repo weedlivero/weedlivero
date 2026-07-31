@@ -7,6 +7,11 @@ const defaultSettings = {
   catalog_name: '',
   catalog_url: '',
   welcome_message: '',
+  catalog_access_code: '',
+
+  current_admin_password: '',
+  new_admin_password: '',
+  confirm_admin_password: '',
 
   telegram_enabled: true,
   telegram_username: '',
@@ -113,9 +118,16 @@ export default function AdminSettingsPage() {
       setSettings({
         ...defaultSettings,
         ...(result.settings || settings),
+        current_admin_password: '',
+        new_admin_password: '',
+        confirm_admin_password: '',
       });
 
-      alert('Impostazioni salvate!');
+      alert(
+        result.password_changed
+          ? 'Impostazioni salvate e password aggiornata!'
+          : 'Impostazioni salvate!'
+      );
     } catch (error) {
       console.error('Errore salvataggio impostazioni:', error);
 
@@ -440,6 +452,110 @@ export default function AdminSettingsPage() {
               value={settings.contact_email || ''}
               onChange={(event) =>
                 update('contact_email', event.target.value)
+              }
+            />
+          </div>
+        </section>
+
+        <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">
+              🔐 Sicurezza
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Modifica il codice di accesso al catalogo e la password
+              amministratore.
+            </p>
+          </div>
+
+          <div>
+            <label className="font-bold text-gray-800">
+              Codice di accesso al catalogo
+            </label>
+
+            <input
+              type="text"
+              autoComplete="off"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              placeholder="WEED2026"
+              value={settings.catalog_access_code || ''}
+              onChange={(event) =>
+                update('catalog_access_code', event.target.value)
+              }
+            />
+
+            <p className="mt-2 text-xs text-gray-400">
+              Minimo 4 caratteri. Verrà richiesto agli utenti per
+              entrare nel catalogo.
+            </p>
+          </div>
+
+          <div className="border-t border-gray-100 pt-5">
+            <h3 className="font-black text-gray-900">
+              Cambia password amministratore
+            </h3>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Lascia vuoti questi campi per mantenere la password
+              attuale.
+            </p>
+          </div>
+
+          <div>
+            <label className="font-bold text-gray-800">
+              Password attuale
+            </label>
+
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              value={settings.current_admin_password || ''}
+              onChange={(event) =>
+                update(
+                  'current_admin_password',
+                  event.target.value
+                )
+              }
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-gray-800">
+              Nuova password
+            </label>
+
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              value={settings.new_admin_password || ''}
+              onChange={(event) =>
+                update('new_admin_password', event.target.value)
+              }
+            />
+
+            <p className="mt-2 text-xs text-gray-400">
+              Minimo 8 caratteri.
+            </p>
+          </div>
+
+          <div>
+            <label className="font-bold text-gray-800">
+              Conferma nuova password
+            </label>
+
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="mt-2 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+              value={settings.confirm_admin_password || ''}
+              onChange={(event) =>
+                update(
+                  'confirm_admin_password',
+                  event.target.value
+                )
               }
             />
           </div>

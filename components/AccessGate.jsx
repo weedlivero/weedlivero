@@ -10,6 +10,7 @@ export default function AccessGate({ children }) {
   const [allowed, setAllowed] = useState(false);
   const [checked, setChecked] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -29,28 +30,50 @@ export default function AccessGate({ children }) {
     }
   }, []);
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
 
-    const validCode =
-      process.env.NEXT_PUBLIC_ACCESS_CODE || 'WEED2026';
-
-    if (code.trim() !== validCode) {
-      setError('Codice non valido.');
-      return;
-    }
+    setLoading(true);
+    setError('');
 
     try {
-      window.localStorage.setItem(ACCESS_STORAGE_KEY, 'ok');
-    } catch (storageError) {
-      console.warn(
-        'Impossibile salvare l’accesso nel browser corrente:',
-        storageError
-      );
+      const response = await fetch('/api/catalog-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: code.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        setError('Codice non valido.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(
+          ACCESS_STORAGE_KEY,
+          'ok'
+        );
+      } catch (storageError) {
+        console.warn(
+          'Impossibile salvare l’accesso nel browser corrente:',
+          storageError
+        );
+      }
+
+      setAllowed(true);
+    } catch (err) {
+      console.error(err);
+      setError('Errore di connessione.');
     }
 
-    setAllowed(true);
-    setError('');
+    setLoading(false);
   }
 
   if (!checked) {
@@ -95,7 +118,8 @@ export default function AccessGate({ children }) {
         <div className="mx-auto mt-2 h-px w-20 bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
 
         <p className="mt-5 text-sm leading-relaxed text-gray-600">
-          Inserisci il codice di accesso per entrare nel catalogo privato.
+          Inserisci il codice di accesso per entrare nel catalogo
+          privato.
         </p>
 
         <input
@@ -114,17 +138,18 @@ export default function AccessGate({ children }) {
           className="wl-input mt-6 px-4 py-4 text-center text-lg font-semibold placeholder:text-gray-400"
         />
 
-        {error ? (
+        {error && (
           <p className="mt-3 text-sm font-semibold text-red-500">
             {error}
           </p>
-        ) : null}
+        )}
 
         <button
           type="submit"
-          className="wl-button-primary mt-5 w-full px-5 py-4 text-lg"
+          disabled={loading}
+          className="wl-button-primary mt-5 w-full px-5 py-4 text-lg disabled:opacity-60"
         >
-          Entra
+          {loading ? 'Verifica...' : 'Entra'}
         </button>
 
         <p className="mt-5 text-xs font-medium text-gray-400">

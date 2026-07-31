@@ -1,3 +1,6 @@
+'use client';
+
+import Image from 'next/image';
 import Link from 'next/link';
 
 function CategoryIcon({ category }) {
@@ -59,20 +62,27 @@ export default function ProductCard({ product }) {
       href={`/product/${product.id}`}
       className="block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]"
     >
-      <div className="flex h-44 items-center justify-center bg-gradient-to-br from-gray-100 to-green-50">
+      <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 to-green-50">
+
         {product.image_url ? (
-          <img
+          <Image
             src={product.image_url}
             alt={product.name}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+            className="object-cover"
+            loading="lazy"
           />
         ) : (
           <CategoryIcon category={product.category} />
         )}
+
       </div>
 
       <div className="p-5">
+
         <div className="mb-2 flex items-center justify-between gap-3">
+
           <p className="text-xs font-bold uppercase tracking-wide text-green-600">
             {product.brand || 'Brand'}
           </p>
@@ -80,6 +90,7 @@ export default function ProductCard({ product }) {
           <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
             {product.id}
           </span>
+
         </div>
 
         <h3 className="text-xl font-black text-gray-900">
@@ -89,6 +100,7 @@ export default function ProductCard({ product }) {
         <p className="mt-2 line-clamp-2 text-sm text-gray-500">
           {product.description}
         </p>
+
       </div>
     </Link>
   );
