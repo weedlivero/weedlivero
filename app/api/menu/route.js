@@ -11,104 +11,147 @@ export const revalidate = 0;
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 
-const MARGIN_X = 48;
-const TOP_MARGIN = 55;
-const BOTTOM_MARGIN = 55;
+const MARGIN = 30;
+const COLUMN_GAP = 14;
+const COLUMN_WIDTH =
+  (PAGE_WIDTH - MARGIN * 2 - COLUMN_GAP) / 2;
 
 const COLORS = {
-  green: rgb(0.02, 0.45, 0.29),
-  darkGreen: rgb(0.02, 0.28, 0.19),
-  gold: rgb(0.72, 0.52, 0.18),
-  dark: rgb(0.08, 0.1, 0.12),
-  gray: rgb(0.38, 0.42, 0.46),
-  lightGray: rgb(0.91, 0.94, 0.92),
+  emerald: rgb(0.02, 0.45, 0.29),
+  emeraldDark: rgb(0.02, 0.26, 0.18),
+  emeraldSoft: rgb(0.92, 0.98, 0.95),
+  gold: rgb(0.78, 0.57, 0.16),
+  goldSoft: rgb(0.99, 0.96, 0.84),
+  ink: rgb(0.08, 0.1, 0.12),
+  gray: rgb(0.42, 0.45, 0.49),
+  line: rgb(0.86, 0.9, 0.87),
   white: rgb(1, 1, 1),
 };
 
+const CATEGORY_ORDER = [
+  'weed',
+  'hash',
+  'concentrate',
+  'edibles',
+  'vapes',
+  'other',
+];
+
 function cleanText(value) {
   return String(value ?? '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
+    .replace(/\s+/g, ' ')
     .trim();
+}
+
+function truncateText(text, maxLength) {
+  const normalized = cleanText(text);
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
 }
 
 function categoryLabel(category) {
   const labels = {
-    weed: 'Flower',
-    hash: 'Hash',
-    concentrate: 'Concentrati',
-    edibles: 'Edibles',
-    vapes: 'Vapes',
+    weed: 'FLOWER',
+    hash: 'HASH',
+    concentrate: 'CONCENTRATI',
+    edibles: 'EDIBLES',
+    vapes: 'VAPES',
+    other: 'ALTRI',
   };
 
-  return labels[category] || category || 'Altri prodotti';
-}
-
-function wrapText(text, font, fontSize, maxWidth) {
-  const normalizedText = cleanText(text);
-
-  if (!normalizedText) {
-    return [];
-  }
-
-  const paragraphs = normalizedText.split('\n');
-  const lines = [];
-
-  for (const paragraph of paragraphs) {
-    if (!paragraph.trim()) {
-      lines.push('');
-      continue;
-    }
-
-    const words = paragraph.split(/\s+/);
-    let currentLine = '';
-
-    for (const word of words) {
-      const candidate = currentLine
-        ? `${currentLine} ${word}`
-        : word;
-
-      const width = font.widthOfTextAtSize(candidate, fontSize);
-
-      if (width <= maxWidth) {
-        currentLine = candidate;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-
-        currentLine = word;
-      }
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-  }
-
-  return lines;
+  return labels[category] || cleanText(category).toUpperCase() || 'ALTRI';
 }
 
 function formatDate() {
   return new Intl.DateTimeFormat('it-IT', {
-    dateStyle: 'long',
+    dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Europe/Rome',
   }).format(new Date());
 }
 
+function formatPrice(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+  return new Intl.NumberFormat('it-IT', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(number);
+}
+
+function buildPriceText(product) {
+  const prices = [
+    ['pz', product.price_unit],
+    ['1g', product.price_1g],
+    ['3g', product.price_3g],
+    ['5g', product.price_5g],
+    ['10g', product.price_10g],
+    ['20g', product.price_20g],
+    ['50g', product.price_50g],
+    ['100g', product.price_100g],
+  ]
+    .map(([label, value]) => {
+      const price = formatPrice(value);
+      return price ? `${label} ${price}€` : null;
+    })
+    .filter(Boolean);
+
+  return prices.join('  ·  ');
+}
+
+function buildMetaText(product) {
+  return [
+    product.thc ? `THC ${cleanText(product.thc)}` : '',
+    product.cbd ? `CBD ${cleanText(product.cbd)}` : '',
+  ]
+    .filter(Boolean)
+    .join('  ·  ');
+}
+
+function buildStars(level) {
+  const value = Math.min(5, Math.max(0, Number(level || 0)));
+
+  if (!value) {
+    return '';
+  }
+
+  return '★'.repeat(value) + '☆'.repeat(5 - value);
+}
+
 function groupProducts(products) {
-  return products.reduce((groups, product) => {
+  const groups = new Map();
+
+  for (const product of products) {
     const category = product.category || 'other';
 
-    if (!groups[category]) {
-      groups[category] = [];
+    if (!groups.has(category)) {
+      groups.set(category, []);
     }
 
-    groups[category].push(product);
+    groups.get(category).push(product);
+  }
 
-    return groups;
-  }, {});
+  return [...groups.entries()].sort(([first], [second]) => {
+    const firstIndex = CATEGORY_ORDER.indexOf(first);
+    const secondIndex = CATEGORY_ORDER.indexOf(second);
+
+    return (
+      (firstIndex === -1 ? 999 : firstIndex) -
+      (secondIndex === -1 ? 999 : secondIndex)
+    );
+  });
 }
 
 async function loadLogo(pdfDocument) {
@@ -132,26 +175,81 @@ async function loadLogo(pdfDocument) {
   }
 }
 
+function getDensity(productCount) {
+  if (productCount <= 36) {
+    return {
+      headerHeight: 108,
+      categoryHeight: 22,
+      rowHeight: 44,
+      nameSize: 10.2,
+      secondarySize: 7.3,
+      priceSize: 7.5,
+      maxNameLength: 32,
+    };
+  }
+
+  if (productCount <= 64) {
+    return {
+      headerHeight: 96,
+      categoryHeight: 19,
+      rowHeight: 36,
+      nameSize: 8.8,
+      secondarySize: 6.6,
+      priceSize: 6.8,
+      maxNameLength: 28,
+    };
+  }
+
+  if (productCount <= 92) {
+    return {
+      headerHeight: 88,
+      categoryHeight: 17,
+      rowHeight: 30,
+      nameSize: 7.6,
+      secondarySize: 5.9,
+      priceSize: 6.1,
+      maxNameLength: 24,
+    };
+  }
+
+  return {
+    headerHeight: 82,
+    categoryHeight: 15,
+    rowHeight: 25,
+    nameSize: 6.7,
+    secondarySize: 5.2,
+    priceSize: 5.4,
+    maxNameLength: 20,
+  };
+}
+
 export async function GET() {
   try {
-    const products = await getProducts();
+    const activeProducts = await getProducts();
 
-    const sortedProducts = [...products].sort((first, second) => {
-      const categoryCompare = categoryLabel(
-        first.category
-      ).localeCompare(categoryLabel(second.category), 'it');
+    const products = [...activeProducts].sort((first, second) => {
+      const firstOrder = Number(first.menu_order || 0);
+      const secondOrder = Number(second.menu_order || 0);
 
-      if (categoryCompare !== 0) {
-        return categoryCompare;
+      if (first.category !== second.category) {
+        return categoryLabel(first.category).localeCompare(
+          categoryLabel(second.category),
+          'it'
+        );
       }
 
-      return String(first.name || '').localeCompare(
-        String(second.name || ''),
+      if (firstOrder !== secondOrder) {
+        return firstOrder - secondOrder;
+      }
+
+      return cleanText(first.name).localeCompare(
+        cleanText(second.name),
         'it'
       );
     });
 
-    const groupedProducts = groupProducts(sortedProducts);
+    const groupedProducts = groupProducts(products);
+    const density = getDensity(products.length);
 
     const pdfDocument = await PDFDocument.create();
 
@@ -171,358 +269,359 @@ export async function GET() {
 
     const logo = await loadLogo(pdfDocument);
 
-    let page;
-    let y;
+    const pages = [];
+    let pageIndex = 0;
+    let columnIndex = 0;
+    let y = 0;
 
-    function addPage() {
-      page = pdfDocument.addPage([
-        PAGE_WIDTH,
-        PAGE_HEIGHT,
-      ]);
+    function drawHeader(page) {
+      page.drawRectangle({
+        x: MARGIN,
+        y: PAGE_HEIGHT - density.headerHeight,
+        width: PAGE_WIDTH - MARGIN * 2,
+        height: density.headerHeight - 18,
+        color: COLORS.emeraldSoft,
+        borderColor: COLORS.line,
+        borderWidth: 1,
+      });
 
       page.drawRectangle({
-        x: 0,
-        y: PAGE_HEIGHT - 15,
-        width: PAGE_WIDTH,
-        height: 15,
-        color: COLORS.green,
+        x: MARGIN,
+        y: PAGE_HEIGHT - density.headerHeight,
+        width: 8,
+        height: density.headerHeight - 18,
+        color: COLORS.gold,
       });
 
-      y = PAGE_HEIGHT - TOP_MARGIN;
+      if (logo) {
+        const maxWidth = 150;
+        const maxHeight = 56;
+        const scale = Math.min(
+          maxWidth / logo.width,
+          maxHeight / logo.height
+        );
 
-      return page;
-    }
+        const width = logo.width * scale;
+        const height = logo.height * scale;
 
-    function ensureSpace(requiredHeight) {
-      if (y - requiredHeight < BOTTOM_MARGIN) {
-        addPage();
-        drawPageHeading();
+        page.drawImage(logo, {
+          x: MARGIN + 20,
+          y: PAGE_HEIGHT - 22 - height,
+          width,
+          height,
+        });
+      } else {
+        page.drawText('WEEDLIVERO', {
+          x: MARGIN + 20,
+          y: PAGE_HEIGHT - 48,
+          size: 22,
+          font: boldFont,
+          color: COLORS.emeraldDark,
+        });
       }
-    }
 
-    function drawPageHeading() {
-      page.drawText('WEEDLIVERO', {
-        x: MARGIN_X,
-        y,
-        size: 12,
+      page.drawText('MENU SMART', {
+        x: PAGE_WIDTH - MARGIN - 148,
+        y: PAGE_HEIGHT - 45,
+        size: 18,
         font: boldFont,
-        color: COLORS.darkGreen,
+        color: COLORS.ink,
       });
 
-      page.drawText('Menu aggiornato', {
-        x: PAGE_WIDTH - MARGIN_X - 105,
-        y,
-        size: 9,
+      page.drawText(`Aggiornato: ${formatDate()}`, {
+        x: PAGE_WIDTH - MARGIN - 148,
+        y: PAGE_HEIGHT - 62,
+        size: 7.5,
         font: regularFont,
         color: COLORS.gray,
       });
 
-      y -= 24;
-
-      page.drawLine({
-        start: {
-          x: MARGIN_X,
-          y,
-        },
-        end: {
-          x: PAGE_WIDTH - MARGIN_X,
-          y,
-        },
-        thickness: 1,
-        color: COLORS.lightGray,
-      });
-
-      y -= 22;
+      page.drawText(
+        `${products.length} ${
+          products.length === 1
+            ? 'prodotto attivo'
+            : 'prodotti attivi'
+        }`,
+        {
+          x: PAGE_WIDTH - MARGIN - 148,
+          y: PAGE_HEIGHT - 76,
+          size: 8,
+          font: boldFont,
+          color: COLORS.emerald,
+        }
+      );
     }
 
-    addPage();
+    function createPage() {
+      const page = pdfDocument.addPage([
+        PAGE_WIDTH,
+        PAGE_HEIGHT,
+      ]);
 
-    if (logo) {
-      const logoDimensions = logo.scale(0.12);
+      pages.push(page);
 
-      const maxLogoWidth = 240;
-      const scale =
-        logoDimensions.width > maxLogoWidth
-          ? maxLogoWidth / logoDimensions.width
-          : 1;
-
-      const logoWidth = logoDimensions.width * scale;
-      const logoHeight = logoDimensions.height * scale;
-
-      page.drawImage(logo, {
-        x: (PAGE_WIDTH - logoWidth) / 2,
-        y: PAGE_HEIGHT - 245,
-        width: logoWidth,
-        height: logoHeight,
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: PAGE_WIDTH,
+        height: PAGE_HEIGHT,
+        color: COLORS.white,
       });
 
-      y = PAGE_HEIGHT - 270;
-    } else {
-      page.drawText('WEEDLIVERO', {
-        x: MARGIN_X,
-        y: PAGE_HEIGHT - 125,
-        size: 34,
-        font: boldFont,
-        color: COLORS.darkGreen,
+      page.drawRectangle({
+        x: 0,
+        y: PAGE_HEIGHT - 10,
+        width: PAGE_WIDTH,
+        height: 10,
+        color: COLORS.emerald,
       });
 
-      y = PAGE_HEIGHT - 165;
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: PAGE_WIDTH,
+        height: 8,
+        color: COLORS.emeraldDark,
+      });
+
+      drawHeader(page);
+
+      columnIndex = 0;
+      y = PAGE_HEIGHT - density.headerHeight - 18;
+
+      return page;
     }
 
-    page.drawText('MENU AGGIORNATO', {
-      x: MARGIN_X,
-      y,
-      size: 22,
-      font: boldFont,
-      color: COLORS.dark,
-    });
+    function currentPage() {
+      return pages[pageIndex];
+    }
 
-    y -= 28;
+    function currentColumnX() {
+      return MARGIN + columnIndex * (COLUMN_WIDTH + COLUMN_GAP);
+    }
 
-    page.drawText(`Generato il ${formatDate()}`, {
-      x: MARGIN_X,
-      y,
-      size: 10,
-      font: regularFont,
-      color: COLORS.gray,
-    });
-
-    y -= 18;
-
-    page.drawText(
-      `${sortedProducts.length} ${
-        sortedProducts.length === 1
-          ? 'prodotto disponibile'
-          : 'prodotti disponibili'
-      }`,
-      {
-        x: MARGIN_X,
-        y,
-        size: 10,
-        font: boldFont,
-        color: COLORS.green,
+    function moveToNextColumnOrPage() {
+      if (columnIndex === 0) {
+        columnIndex = 1;
+        y = PAGE_HEIGHT - density.headerHeight - 18;
+        return true;
       }
-    );
 
-    y -= 32;
+      if (pageIndex === 0) {
+        pageIndex = 1;
+        createPage();
+        return true;
+      }
 
-    page.drawRectangle({
-      x: MARGIN_X,
-      y: y - 1,
-      width: PAGE_WIDTH - MARGIN_X * 2,
-      height: 2,
-      color: COLORS.gold,
-    });
+      return false;
+    }
 
-    y -= 35;
+    function ensureSpace(requiredHeight) {
+      const bottomLimit = 42;
 
-    if (sortedProducts.length === 0) {
+      if (y - requiredHeight >= bottomLimit) {
+        return true;
+      }
+
+      return moveToNextColumnOrPage();
+    }
+
+    function drawCategoryHeader(label) {
+      if (!ensureSpace(density.categoryHeight + 6)) {
+        return false;
+      }
+
+      const page = currentPage();
+      const x = currentColumnX();
+
+      page.drawRectangle({
+        x,
+        y: y - density.categoryHeight + 3,
+        width: COLUMN_WIDTH,
+        height: density.categoryHeight,
+        color: COLORS.emeraldDark,
+      });
+
+      page.drawRectangle({
+        x,
+        y: y - density.categoryHeight + 3,
+        width: 7,
+        height: density.categoryHeight,
+        color: COLORS.gold,
+      });
+
+      page.drawText(label, {
+        x: x + 12,
+        y: y - density.categoryHeight + 8,
+        size: Math.max(6.5, density.nameSize - 0.5),
+        font: boldFont,
+        color: COLORS.white,
+      });
+
+      y -= density.categoryHeight + 5;
+      return true;
+    }
+
+    function drawProduct(product, index) {
+      if (!ensureSpace(density.rowHeight)) {
+        return false;
+      }
+
+      const page = currentPage();
+      const x = currentColumnX();
+
+      const background =
+        index % 2 === 0
+          ? COLORS.white
+          : COLORS.emeraldSoft;
+
+      page.drawRectangle({
+        x,
+        y: y - density.rowHeight + 2,
+        width: COLUMN_WIDTH,
+        height: density.rowHeight,
+        color: background,
+        borderColor: COLORS.line,
+        borderWidth: 0.5,
+      });
+
+      const id = truncateText(product.id, 12);
+      const name = truncateText(
+        product.name || 'Prodotto',
+        density.maxNameLength
+      );
+
+      const stars = buildStars(product.quality_level);
+      const prices = buildPriceText(product);
+      const meta = buildMetaText(product);
+      const promo = truncateText(product.price_promo, 30);
+
+      page.drawText(name, {
+        x: x + 8,
+        y: y - 10,
+        size: density.nameSize,
+        font: boldFont,
+        color: COLORS.ink,
+      });
+
+      if (id) {
+        const idWidth = boldFont.widthOfTextAtSize(
+          id,
+          density.secondarySize
+        );
+
+        page.drawText(id, {
+          x: x + COLUMN_WIDTH - idWidth - 8,
+          y: y - 9,
+          size: density.secondarySize,
+          font: boldFont,
+          color: COLORS.emerald,
+        });
+      }
+
+      const secondaryLine = [stars, meta]
+        .filter(Boolean)
+        .join('   ');
+
+      if (secondaryLine) {
+        page.drawText(secondaryLine, {
+          x: x + 8,
+          y: y - 21,
+          size: density.secondarySize,
+          font: regularFont,
+          color: stars ? COLORS.gold : COLORS.gray,
+        });
+      }
+
+      if (prices) {
+        page.drawText(
+          truncateText(prices, products.length > 80 ? 52 : 68),
+          {
+            x: x + 8,
+            y: y - density.rowHeight + 8,
+            size: density.priceSize,
+            font: boldFont,
+            color: COLORS.emeraldDark,
+          }
+        );
+      }
+
+      if (promo) {
+        const promoWidth = boldFont.widthOfTextAtSize(
+          promo,
+          density.priceSize
+        );
+
+        page.drawRectangle({
+          x: x + COLUMN_WIDTH - promoWidth - 14,
+          y: y - density.rowHeight + 4,
+          width: promoWidth + 10,
+          height: density.priceSize + 7,
+          color: COLORS.goldSoft,
+          borderColor: COLORS.gold,
+          borderWidth: 0.4,
+        });
+
+        page.drawText(promo, {
+          x: x + COLUMN_WIDTH - promoWidth - 9,
+          y: y - density.rowHeight + 8,
+          size: density.priceSize,
+          font: boldFont,
+          color: COLORS.ink,
+        });
+      }
+
+      y -= density.rowHeight + 2;
+      return true;
+    }
+
+    createPage();
+
+    if (products.length === 0) {
+      const page = currentPage();
+
       page.drawText(
         'Al momento non ci sono prodotti attivi disponibili.',
         {
-          x: MARGIN_X,
-          y,
+          x: MARGIN,
+          y: PAGE_HEIGHT - density.headerHeight - 45,
           size: 13,
           font: regularFont,
           color: COLORS.gray,
         }
       );
     } else {
-      for (const [category, categoryProducts] of Object.entries(
-        groupedProducts
-      )) {
-        ensureSpace(70);
+      let productIndex = 0;
 
-        page.drawRectangle({
-          x: MARGIN_X,
-          y: y - 5,
-          width: PAGE_WIDTH - MARGIN_X * 2,
-          height: 28,
-          color: COLORS.darkGreen,
-        });
-
-        page.drawText(categoryLabel(category).toUpperCase(), {
-          x: MARGIN_X + 12,
-          y: y + 4,
-          size: 13,
-          font: boldFont,
-          color: COLORS.white,
-        });
-
-        y -= 42;
-
-        for (const product of categoryProducts) {
-          const name = cleanText(product.name) || 'Prodotto';
-          const brand = cleanText(product.brand);
-          const description = cleanText(product.description);
-          const notes = cleanText(product.notes);
-          const thc = cleanText(product.thc);
-          const cbd = cleanText(product.cbd);
-          const productId = cleanText(product.id);
-
-          const descriptionLines = wrapText(
-            description,
-            regularFont,
-            9.5,
-            PAGE_WIDTH - MARGIN_X * 2
-          ).slice(0, 6);
-
-          const notesLines = wrapText(
-            notes,
-            regularFont,
-            9.5,
-            PAGE_WIDTH - MARGIN_X * 2 - 18
-          ).slice(0, 8);
-
-          let estimatedHeight = 54;
-
-          estimatedHeight += descriptionLines.length * 13;
-
-          if (notesLines.length > 0) {
-            estimatedHeight += 28 + notesLines.length * 13;
-          }
-
-          ensureSpace(estimatedHeight);
-
-          page.drawText(name, {
-            x: MARGIN_X,
-            y,
-            size: 14,
-            font: boldFont,
-            color: COLORS.dark,
-          });
-
-          if (productId) {
-            const idWidth = boldFont.widthOfTextAtSize(
-              productId,
-              8.5
-            );
-
-            page.drawText(productId, {
-              x: PAGE_WIDTH - MARGIN_X - idWidth,
-              y: y + 2,
-              size: 8.5,
-              font: boldFont,
-              color: COLORS.green,
-            });
-          }
-
-          y -= 17;
-
-          const details = [
-            brand ? `Brand: ${brand}` : '',
-            thc ? `THC: ${thc}` : '',
-            cbd ? `CBD: ${cbd}` : '',
-          ].filter(Boolean);
-
-          if (details.length > 0) {
-            page.drawText(details.join('   •   '), {
-              x: MARGIN_X,
-              y,
-              size: 9,
-              font: boldFont,
-              color: COLORS.green,
-            });
-
-            y -= 15;
-          }
-
-          for (const line of descriptionLines) {
-            page.drawText(line, {
-              x: MARGIN_X,
-              y,
-              size: 9.5,
-              font: regularFont,
-              color: COLORS.gray,
-            });
-
-            y -= 13;
-          }
-
-          if (notesLines.length > 0) {
-            y -= 4;
-
-            page.drawRectangle({
-              x: MARGIN_X,
-              y: y - notesLines.length * 13 - 12,
-              width: PAGE_WIDTH - MARGIN_X * 2,
-              height: notesLines.length * 13 + 18,
-              color: rgb(0.95, 0.98, 0.96),
-              borderColor: COLORS.lightGray,
-              borderWidth: 1,
-            });
-
-            page.drawText('NOTE / PREZZI', {
-              x: MARGIN_X + 10,
-              y: y - 1,
-              size: 8,
-              font: boldFont,
-              color: COLORS.darkGreen,
-            });
-
-            y -= 17;
-
-            for (const line of notesLines) {
-              page.drawText(line, {
-                x: MARGIN_X + 10,
-                y,
-                size: 9.5,
-                font: regularFont,
-                color: COLORS.dark,
-              });
-
-              y -= 13;
-            }
-
-            y -= 8;
-          }
-
-          y -= 10;
-
-          page.drawLine({
-            start: {
-              x: MARGIN_X,
-              y,
-            },
-            end: {
-              x: PAGE_WIDTH - MARGIN_X,
-              y,
-            },
-            thickness: 0.7,
-            color: COLORS.lightGray,
-          });
-
-          y -= 20;
+      outer:
+      for (const [category, categoryProducts] of groupedProducts) {
+        if (!drawCategoryHeader(categoryLabel(category))) {
+          break;
         }
 
-        y -= 8;
+        for (const product of categoryProducts) {
+          if (!drawProduct(product, productIndex)) {
+            break outer;
+          }
+
+          productIndex += 1;
+        }
+
+        y -= 4;
       }
     }
 
-    const pages = pdfDocument.getPages();
+    const finalPages = pdfDocument.getPages();
 
-    pages.forEach((currentPage, index) => {
-      const pageNumber = `${index + 1} / ${pages.length}`;
-      const pageNumberWidth = regularFont.widthOfTextAtSize(
-        pageNumber,
-        8
-      );
+    finalPages.forEach((page, index) => {
+      const footer = `weedlivero.shop  ·  Menu generato automaticamente  ·  ${
+        index + 1
+      }/${finalPages.length}`;
 
-      currentPage.drawText(
-        'Menu generato automaticamente dai prodotti attivi',
-        {
-          x: MARGIN_X,
-          y: 28,
-          size: 8,
-          font: regularFont,
-          color: COLORS.gray,
-        }
-      );
-
-      currentPage.drawText(pageNumber, {
-        x: PAGE_WIDTH - MARGIN_X - pageNumberWidth,
-        y: 28,
-        size: 8,
+      page.drawText(footer, {
+        x: MARGIN,
+        y: 20,
+        size: 7,
         font: regularFont,
         color: COLORS.gray,
       });
