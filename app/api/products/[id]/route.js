@@ -96,21 +96,56 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const updates = {
-      name: String(body.name ?? '').trim(),
-      brand: String(body.brand ?? '').trim(),
-      category: String(body.category ?? '').trim(),
-      description: String(body.description ?? '').trim(),
-      notes: String(body.notes ?? '').trim(),
-      image_url: body.image_url ?? '',
-      image_path: body.image_path ?? '',
-      video_url: body.video_url ?? '',
-      video_path: body.video_path ?? '',
-      thc: String(body.thc ?? '').trim(),
-      cbd: String(body.cbd ?? '').trim(),
-      active: body.active === true,
-      featured: body.featured === true,
-    };
+    function numberOrNull(value) {
+  if (
+    value === '' ||
+    value === null ||
+    value === undefined
+  ) {
+    return null;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+const updates = {
+  name: String(body.name ?? '').trim(),
+  brand: String(body.brand ?? '').trim(),
+  category: String(body.category ?? '').trim(),
+  description: String(body.description ?? '').trim(),
+  notes: String(body.notes ?? '').trim(),
+
+  image_url: body.image_url ?? '',
+  image_path: body.image_path ?? '',
+
+  video_url: body.video_url ?? '',
+  video_path: body.video_path ?? '',
+
+  thc: String(body.thc ?? '').trim(),
+  cbd: String(body.cbd ?? '').trim(),
+
+  quality_level: numberOrNull(body.quality_level),
+
+  price_unit: numberOrNull(body.price_unit),
+
+  price_1g: numberOrNull(body.price_1g),
+  price_3g: numberOrNull(body.price_3g),
+  price_5g: numberOrNull(body.price_5g),
+  price_10g: numberOrNull(body.price_10g),
+  price_20g: numberOrNull(body.price_20g),
+  price_50g: numberOrNull(body.price_50g),
+  price_100g: numberOrNull(body.price_100g),
+
+  price_promo: String(body.price_promo ?? '').trim(),
+
+  menu_order:
+    numberOrNull(body.menu_order) ?? 0,
+
+  active: body.active === true,
+  featured: body.featured === true,
+};
 
     if (!updates.name) {
       return Response.json(

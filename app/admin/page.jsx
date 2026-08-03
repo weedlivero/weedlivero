@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import AdminLayout from '@/components/AdminLayout';
 import AdminProductsList from '@/components/AdminProductsList';
+import AdminMenuActions from '@/components/AdminMenuActions';
+
 import { getAdminProducts } from '@/lib/products';
 import { getCategories } from '@/lib/categories';
 
@@ -112,6 +114,9 @@ export default async function AdminPage() {
         </Link>
       </section>
 
+      {/* MENU PDF */}
+      <AdminMenuActions />
+
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-black text-gray-900">
           Prodotti
@@ -119,7 +124,7 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/products/new"
-          className="rounded-2xl bg-green-600 px-5 py-3 text-center font-bold text-white"
+          className="rounded-2xl bg-green-600 px-5 py-3 text-center font-bold text-white transition hover:bg-green-700"
         >
           + Nuovo prodotto
         </Link>

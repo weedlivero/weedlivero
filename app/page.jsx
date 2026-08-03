@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import UserPopup from '@/components/UserPopup';
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
@@ -64,6 +65,18 @@ export default async function HomePage() {
                     : 'categorie'}
                 </span>
               </div>
+
+              <Link
+                href="/menu"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-4 text-base font-black text-white shadow-lg shadow-emerald-200/70 transition active:scale-[0.98]"
+              >
+                <span aria-hidden="true">📄</span>
+                Scarica menu aggiornato
+              </Link>
+
+              <p className="mt-2 text-center text-xs text-gray-400">
+                Generato in tempo reale dai prodotti attivi.
+              </p>
             </div>
           </div>
 

@@ -33,12 +33,95 @@ function getCategoryFallback(category) {
   }
 }
 
+function renderStars(level) {
+  const value = Number(level || 0);
+
+  if (!value) {
+    return null;
+  }
+
+  const safeValue = Math.min(5, Math.max(1, value));
+
+  return '★'.repeat(safeValue) + '☆'.repeat(5 - safeValue);
+}
+
+function formatPrice(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+  return new Intl.NumberFormat('it-IT', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(number);
+}
+
+function hasPriceInformation(product) {
+  return Boolean(
+    product.quality_level ||
+      product.price_unit ||
+      product.price_1g ||
+      product.price_3g ||
+      product.price_5g ||
+      product.price_10g ||
+      product.price_20g ||
+      product.price_50g ||
+      product.price_100g ||
+      product.price_promo
+  );
+}
+
 export default async function ProductPage({ params }) {
   const product = await getProduct(params.id);
 
   if (!product) {
     notFound();
   }
+
+  const prices = [
+    {
+      label: 'Prezzo unitario',
+      value: product.price_unit,
+    },
+    {
+      label: '1 g',
+      value: product.price_1g,
+    },
+    {
+      label: '3 g',
+      value: product.price_3g,
+    },
+    {
+      label: '5 g',
+      value: product.price_5g,
+    },
+    {
+      label: '10 g',
+      value: product.price_10g,
+    },
+    {
+      label: '20 g',
+      value: product.price_20g,
+    },
+    {
+      label: '50 g',
+      value: product.price_50g,
+    },
+    {
+      label: '100 g',
+      value: product.price_100g,
+    },
+  ].filter((item) => formatPrice(item.value));
 
   return (
     <AccessGate>
@@ -123,6 +206,57 @@ export default async function ProductPage({ params }) {
                 </div>
               ) : null}
             </div>
+
+            {hasPriceInformation(product) ? (
+              <section className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+                <h2 className="text-sm font-black uppercase tracking-wide text-emerald-700">
+                  Qualità e prezzi
+                </h2>
+
+                {product.quality_level ? (
+                  <div className="mt-4 flex items-center justify-between gap-4">
+                    <span className="font-bold text-gray-700">
+                      Qualità
+                    </span>
+
+                    <span className="text-xl tracking-wide text-amber-500">
+                      {renderStars(product.quality_level)}
+                    </span>
+                  </div>
+                ) : null}
+
+                {prices.length > 0 ? (
+                  <div className="mt-4 divide-y divide-emerald-100 overflow-hidden rounded-2xl border border-emerald-100 bg-white">
+                    {prices.map((price) => (
+                      <div
+                        key={price.label}
+                        className="flex items-center justify-between gap-4 px-4 py-3"
+                      >
+                        <span className="text-sm font-semibold text-gray-600">
+                          {price.label}
+                        </span>
+
+                        <strong className="text-base text-gray-900">
+                          {formatPrice(price.value)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {product.price_promo ? (
+                  <div className="mt-5 rounded-2xl bg-green-600 p-4 text-center text-white">
+                    <p className="text-xs font-bold uppercase tracking-wide text-green-100">
+                      Promo
+                    </p>
+
+                    <p className="mt-1 text-lg font-black">
+                      {product.price_promo}
+                    </p>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
 
             {product.video_url ? (
               <div className="mt-6 overflow-hidden rounded-2xl bg-black">

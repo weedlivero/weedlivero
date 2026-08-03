@@ -6,6 +6,8 @@ import { supabase, hasSupabaseConfig } from '@/lib/supabase';
 import { demoProducts } from '@/data/demoProducts';
 import { categories } from '@/data/categories';
 import Header from '@/components/Header';
+import ProductPrices from '@/components/admin/ProductPrices';
+
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -18,21 +20,41 @@ export default function EditProductPage() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const [form, setForm] = useState({
-    id: '',
-    name: '',
-    brand: '',
-    category: 'weed',
-    description: '',
-    notes: '',
-    image_url: '',
-    image_path: '',
-    video_url: '',
-    video_path: '',
-    thc: '',
-    cbd: '',
-    active: true,
-    featured: false,
-  });
+  id: '',
+  name: '',
+  brand: '',
+  category: 'weed',
+
+  description: '',
+  notes: '',
+
+  image_url: '',
+  image_path: '',
+  video_url: '',
+  video_path: '',
+
+  thc: '',
+  cbd: '',
+
+  quality_level: null,
+
+  price_unit: '',
+
+  price_1g: '',
+  price_3g: '',
+  price_5g: '',
+  price_10g: '',
+  price_20g: '',
+  price_50g: '',
+  price_100g: '',
+
+  price_promo: '',
+
+  menu_order: 0,
+
+  active: true,
+  featured: false,
+});
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -438,9 +460,14 @@ export default function EditProductPage() {
             </div>
           </section>
 
+          <ProductPrices
+            form={form}
+            updateField={updateField}
+          />
+
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h2 className="text-xl font-black text-gray-900">
-              Media
+              Stato prodotto
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
@@ -500,6 +527,7 @@ export default function EditProductPage() {
               </p>
             ) : null}
           </section>
+          
 
           <section className="rounded-3xl bg-white p-6 shadow-md">
             <h2 className="text-xl font-black text-gray-900">
