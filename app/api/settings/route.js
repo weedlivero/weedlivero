@@ -65,7 +65,10 @@ export async function GET() {
         logo_url,
         primary_color,
         secondary_color,
-        updated_at
+menu_pdf_mode,
+menu_pdf_path,
+menu_pdf_name,
+updated_at
       `)
       .eq('id', 1)
       .single();
@@ -164,6 +167,20 @@ export async function PATCH(request) {
 
       updated_at: new Date().toISOString(),
     };
+    if (
+  body.menu_pdf_mode === 'manual' ||
+  body.menu_pdf_mode === 'automatic'
+) {
+  updates.menu_pdf_mode = body.menu_pdf_mode;
+}
+
+if (typeof body.menu_pdf_path === 'string') {
+  updates.menu_pdf_path = body.menu_pdf_path;
+}
+
+if (typeof body.menu_pdf_name === 'string') {
+  updates.menu_pdf_name = body.menu_pdf_name;
+}
 
     /*
      * Aggiorna il codice del catalogo solamente quando viene inviato.
@@ -324,9 +341,12 @@ export async function PATCH(request) {
         popup_message,
         popup_button_text,
         logo_url,
-        primary_color,
-        secondary_color,
-        updated_at
+primary_color,
+secondary_color,
+menu_pdf_mode,
+menu_pdf_path,
+menu_pdf_name,
+updated_at
       `)
       .single();
 
