@@ -4,6 +4,7 @@ import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
 import CategoryCard from '@/components/CategoryCard';
 import ProductCard from '@/components/ProductCard';
+import RequestListHomeButton from '@/components/RequestListHomeButton';
 import { getActiveCategories } from '@/lib/categories';
 import { getProducts } from '@/lib/products';
 
@@ -77,6 +78,7 @@ export default async function HomePage() {
               <p className="mt-2 text-center text-xs text-gray-400">
                 Generato in tempo reale dai prodotti attivi.
               </p>
+              <RequestListHomeButton />
             </div>
           </div>
 
