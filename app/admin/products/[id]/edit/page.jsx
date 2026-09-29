@@ -54,6 +54,7 @@ export default function EditProductPage() {
 
   active: true,
   featured: false,
+  pdf_badge: '',
 });
 
   function updateField(field, value) {
@@ -594,6 +595,25 @@ Disponibile fino a esaurimento.`}
                 }
               />
             </div>
+            <div className="mt-5">
+  <label className="block text-sm font-bold text-gray-700">
+    Etichetta PDF
+  </label>
+
+  <select
+    className="mt-2 w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-green-500"
+    value={form.pdf_badge || ''}
+    onChange={(event) =>
+      updateField('pdf_badge', event.target.value)
+    }
+  >
+    <option value="">Nessuna</option>
+    <option value="NEW">NEW</option>
+    <option value="PREMIUM">PREMIUM</option>
+    <option value="LIMITED">LIMITED</option>
+    <option value="BEST SELLER">BEST SELLER</option>
+  </select>
+</div>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-md">

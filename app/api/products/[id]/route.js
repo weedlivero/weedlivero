@@ -145,6 +145,7 @@ const updates = {
 
   active: body.active === true,
   featured: body.featured === true,
+  pdf_badge: String(body.pdf_badge ?? '').trim(),
 };
 
     if (!updates.name) {

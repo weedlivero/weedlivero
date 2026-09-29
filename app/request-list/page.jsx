@@ -9,46 +9,115 @@ import {
   clearRequestList,
   getRequestList,
   removeProductFromRequestList,
+  increaseProductSelection,
+  decreaseProductSelection,
 } from '@/lib/requestList';
 
 function getCategoryMeta(category) {
   switch (category) {
     case 'weed':
-      return {
-        emoji: '🌿',
-        label: 'Weed',
-      };
+      return { emoji: '🌿', label: 'Weed' };
 
     case 'hash':
-      return {
-        emoji: '🟫',
-        label: 'Hash',
-      };
+      return { emoji: '🟫', label: 'Hash' };
 
     case 'concentrate':
-      return {
-        emoji: '💧',
-        label: 'Concentrate',
-      };
+      return { emoji: '💧', label: 'Concentrate' };
 
     case 'edibles':
-      return {
-        emoji: '🍬',
-        label: 'Edibles',
-      };
+      return { emoji: '🍬', label: 'Edibles' };
 
     case 'vapes':
-      return {
-        emoji: '💨',
-        label: 'Vapes',
-      };
+      return { emoji: '💨', label: 'Vapes' };
 
     default:
-      return {
-        emoji: '📦',
-        label: 'Prodotto',
-      };
+      return { emoji: '📦', label: 'Prodotto' };
   }
+}
+
+function formatPrice(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return '€ 0,00';
+  }
+
+  return new Intl.NumberFormat('it-IT', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(number);
+}
+
+function getAvailableSizes(product) {
+  const sizes = [
+    {
+      key: 'unit',
+      label: 'Unità',
+      price: product.price_unit,
+    },
+    {
+      key: '1g',
+      label: '1 g',
+      price: product.price_1g,
+    },
+    {
+      key: '3g',
+      label: '3 g',
+      price: product.price_3g,
+    },
+    {
+      key: '5g',
+      label: '5 g',
+      price: product.price_5g,
+    },
+    {
+      key: '10g',
+      label: '10 g',
+      price: product.price_10g,
+    },
+    {
+      key: '20g',
+      label: '20 g',
+      price: product.price_20g,
+    },
+    {
+      key: '50g',
+      label: '50 g',
+      price: product.price_50g,
+    },
+    {
+      key: '100g',
+      label: '100 g',
+      price: product.price_100g,
+    },
+  ];
+
+  return sizes.filter((size) => {
+    const price = Number(size.price);
+
+    return Number.isFinite(price) && price > 0;
+  });
+}
+
+function getProductTotal(product) {
+  const sizes = getAvailableSizes(product);
+
+  return sizes.reduce((total, size) => {
+    const quantity =
+      Number(product.selections?.[size.key]) || 0;
+
+    return total + Number(size.price) * quantity;
+  }, 0);
+}
+
+function getSelectedCount(product) {
+  return Object.values(
+    product.selections || {}
+  ).reduce(
+    (total, quantity) =>
+      total + (Number(quantity) || 0),
+    0
+  );
 }
 
 export default function RequestListPage() {
@@ -59,7 +128,23 @@ export default function RequestListPage() {
   }, []);
 
   function removeProduct(productId) {
-    const nextProducts = removeProductFromRequestList(productId);
+    const nextProducts =
+      removeProductFromRequestList(productId);
+
+    setProducts(nextProducts);
+  }
+
+  function increase(productId, size) {
+    const nextProducts =
+      increaseProductSelection(productId, size);
+
+    setProducts(nextProducts);
+  }
+
+  function decrease(productId, size) {
+    const nextProducts =
+      decreaseProductSelection(productId, size);
+
     setProducts(nextProducts);
   }
 
@@ -75,6 +160,18 @@ export default function RequestListPage() {
     clearRequestList();
     setProducts([]);
   }
+
+  const orderTotal = products.reduce(
+    (total, product) =>
+      total + getProductTotal(product),
+    0
+  );
+
+  const totalSelections = products.reduce(
+    (total, product) =>
+      total + getSelectedCount(product),
+    0
+  );
 
   return (
     <>
@@ -95,8 +192,8 @@ export default function RequestListPage() {
 
           <p className="mt-2 text-gray-500">
             {products.length === 1
-              ? '1 prodotto selezionato'
-              : `${products.length} prodotti selezionati`}
+              ? '1 prodotto nella lista'
+              : `${products.length} prodotti nella lista`}
           </p>
         </div>
 
@@ -123,7 +220,14 @@ export default function RequestListPage() {
           <>
             <section className="mt-8 space-y-4">
               {products.map((product) => {
-                const category = getCategoryMeta(product.category);
+                const category =
+                  getCategoryMeta(product.category);
+
+                const availableSizes =
+                  getAvailableSizes(product);
+
+                const productTotal =
+                  getProductTotal(product);
 
                 return (
                   <article
@@ -156,7 +260,8 @@ export default function RequestListPage() {
                           </h2>
 
                           <p className="mt-1 text-sm font-bold text-green-700">
-                            {category.emoji} {category.label}
+                            {category.emoji}{' '}
+                            {category.label}
                           </p>
 
                           <p className="mt-1 text-sm text-gray-500">
@@ -171,7 +276,9 @@ export default function RequestListPage() {
 
                       <button
                         type="button"
-                        onClick={() => removeProduct(product.id)}
+                        onClick={() =>
+                          removeProduct(product.id)
+                        }
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-black text-red-600 transition active:scale-95"
                         aria-label={`Rimuovi ${product.name}`}
                       >
@@ -184,12 +291,151 @@ export default function RequestListPage() {
                         {product.description}
                       </p>
                     ) : null}
+
+                    {availableSizes.length > 0 ? (
+                      <div className="mt-5 border-t border-gray-100 pt-5">
+                        <p className="mb-3 text-sm font-black text-gray-900">
+                          Scegli quantità
+                        </p>
+
+                        <div className="space-y-2">
+                          {availableSizes.map((size) => {
+                            const quantity =
+                              Number(
+                                product.selections?.[
+                                  size.key
+                                ]
+                              ) || 0;
+
+                            const subtotal =
+                              Number(size.price) *
+                              quantity;
+
+                            return (
+                              <div
+                                key={size.key}
+                                className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50 p-3"
+                              >
+                                <div>
+                                  <p className="font-black text-gray-900">
+                                    {size.label}
+                                  </p>
+
+                                  <p className="text-sm font-bold text-green-700">
+                                    {formatPrice(
+                                      size.price
+                                    )}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      decrease(
+                                        product.id,
+                                        size.key
+                                      )
+                                    }
+                                    disabled={
+                                      quantity === 0
+                                    }
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-black text-gray-700 shadow-sm disabled:opacity-30"
+                                  >
+                                    −
+                                  </button>
+
+                                  <span className="min-w-8 text-center text-lg font-black text-gray-900">
+                                    {quantity}
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      increase(
+                                        product.id,
+                                        size.key
+                                      )
+                                    }
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-xl font-black text-white shadow-sm transition active:scale-95"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                <div className="w-20 text-right">
+                                  {quantity > 0 ? (
+                                    <strong className="text-sm text-gray-900">
+                                      {formatPrice(
+                                        subtotal
+                                      )}
+                                    </strong>
+                                  ) : (
+                                    <span className="text-sm text-gray-300">
+                                      —
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {productTotal > 0 ? (
+                          <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
+                            <span className="font-bold text-emerald-800">
+                              Subtotale
+                            </span>
+
+                            <strong className="text-xl text-emerald-800">
+                              {formatPrice(
+                                productTotal
+                              )}
+                            </strong>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
+                        Nessun prezzo disponibile per
+                        questo prodotto.
+                      </div>
+                    )}
                   </article>
                 );
               })}
             </section>
 
-            <RequestContactButtons products={products} />
+            <section className="mt-6 rounded-3xl bg-gray-900 p-6 text-white shadow-lg">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-300">
+                    Totale ordine
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-400">
+                    {totalSelections === 1
+                      ? '1 selezione'
+                      : `${totalSelections} selezioni`}
+                  </p>
+                </div>
+
+                <strong className="text-3xl font-black">
+                  {formatPrice(orderTotal)}
+                </strong>
+              </div>
+            </section>
+
+            {totalSelections > 0 ? (
+              <RequestContactButtons
+                products={products}
+              />
+            ) : (
+              <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-center text-sm font-bold text-amber-700">
+                Seleziona almeno una pezzatura per
+                inviare la richiesta.
+              </div>
+            )}
 
             <section className="mt-3">
               <button
