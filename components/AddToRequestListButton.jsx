@@ -187,15 +187,15 @@ export default function AddToRequestListButton({
       0
     ) {
       setMessage(
-        '✓ Prodotto rimosso dalla lista'
+        '✓ Prodotto rimosso dal carrello'
       );
     } else if (wasAlreadyInList) {
       setMessage(
-        '✓ Quantità aggiornate nella lista'
+        '✓ Quantità aggiornate nel carrello'
       );
     } else {
       setMessage(
-        '✓ Prodotto aggiunto alla lista'
+        '✓ Prodotto aggiunto al carrello'
       );
     }
   }
@@ -296,11 +296,11 @@ export default function AddToRequestListButton({
       >
         {totalQuantity === 0
           ? wasAlreadyInList
-            ? '🗑️ Rimuovi dalla lista'
+            ? '🗑️ Rimuovi dalla carrello'
             : 'Seleziona almeno una quantità'
           : wasAlreadyInList
             ? '✓ Aggiorna quantità'
-            : '📋 Aggiungi alla lista'}
+            : '📋 Aggiungi al carrello'}
       </button>
 
       {message ? (

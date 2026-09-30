@@ -13,7 +13,8 @@ export default function RequestListBar() {
     }
 
     function handleUpdatedList(event) {
-      const updatedProducts = event?.detail?.products;
+      const updatedProducts =
+        event?.detail?.products;
 
       if (Array.isArray(updatedProducts)) {
         setProducts(updatedProducts);
@@ -30,7 +31,10 @@ export default function RequestListBar() {
       handleUpdatedList
     );
 
-    window.addEventListener('storage', loadProducts);
+    window.addEventListener(
+      'storage',
+      loadProducts
+    );
 
     return () => {
       window.removeEventListener(
@@ -38,7 +42,10 @@ export default function RequestListBar() {
         handleUpdatedList
       );
 
-      window.removeEventListener('storage', loadProducts);
+      window.removeEventListener(
+        'storage',
+        loadProducts
+      );
     };
   }, []);
 
@@ -56,19 +63,19 @@ export default function RequestListBar() {
       >
         <div>
           <p className="text-sm font-black">
-            📋 {count}{' '}
+            🛒 {count}{' '}
             {count === 1
-              ? 'prodotto selezionato'
-              : 'prodotti selezionati'}
+              ? 'prodotto nel carrello'
+              : 'prodotti nel carrello'}
           </p>
 
           <p className="mt-1 text-xs text-gray-300">
-            Tocca per vedere la lista
+            Tocca per aprire il carrello
           </p>
         </div>
 
-        <span className="text-sm font-black">
-          Apri →
+        <span className="shrink-0 text-sm font-black">
+          Carrello →
         </span>
       </Link>
     </div>

@@ -43,7 +43,7 @@ export default function RequestListHomeButton() {
       className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-600 bg-white px-5 py-4 text-base font-black text-emerald-700 transition active:scale-[0.98]"
     >
       <span aria-hidden="true">📋</span>
-      La tua lista ({count})
+      Il tuo carrello ({count})
     </Link>
   );
 }

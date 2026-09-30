@@ -20,16 +20,28 @@ function getCategoryMeta(category) {
       return { emoji: '🟫', label: 'Hash' };
 
     case 'concentrate':
-      return { emoji: '💧', label: 'Concentrate' };
+      return {
+        emoji: '💧',
+        label: 'Concentrate',
+      };
 
     case 'edibles':
-      return { emoji: '🍬', label: 'Edibles' };
+      return {
+        emoji: '🍬',
+        label: 'Edibles',
+      };
 
     case 'vapes':
-      return { emoji: '💨', label: 'Vapes' };
+      return {
+        emoji: '💨',
+        label: 'Vapes',
+      };
 
     default:
-      return { emoji: '📦', label: 'Prodotto' };
+      return {
+        emoji: '📦',
+        label: 'Prodotto',
+      };
   }
 }
 
@@ -93,19 +105,33 @@ function getAvailableSizes(product) {
   return sizes.filter((size) => {
     const price = Number(size.price);
 
-    return Number.isFinite(price) && price > 0;
+    return (
+      Number.isFinite(price) &&
+      price > 0
+    );
   });
 }
 
 function getProductTotal(product) {
-  const sizes = getAvailableSizes(product);
+  const sizes =
+    getAvailableSizes(product);
 
-  return sizes.reduce((total, size) => {
-    const quantity =
-      Number(product.selections?.[size.key]) || 0;
+  return sizes.reduce(
+    (total, size) => {
+      const quantity =
+        Number(
+          product.selections?.[
+            size.key
+          ]
+        ) || 0;
 
-    return total + Number(size.price) * quantity;
-  }, 0);
+      return (
+        total +
+        Number(size.price) * quantity
+      );
+    },
+    0
+  );
 }
 
 function getSelectedCount(product) {
@@ -113,13 +139,15 @@ function getSelectedCount(product) {
     product.selections || {}
   ).reduce(
     (total, quantity) =>
-      total + (Number(quantity) || 0),
+      total +
+      (Number(quantity) || 0),
     0
   );
 }
 
 export default function RequestListPage() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
   useEffect(() => {
     setProducts(getRequestList());
@@ -127,29 +155,18 @@ export default function RequestListPage() {
 
   function removeProduct(productId) {
     const nextProducts =
-      removeProductFromRequestList(productId);
-
-    setProducts(nextProducts);
-  }
-
-  function increase(productId, size) {
-    const nextProducts =
-      increaseProductSelection(productId, size);
-
-    setProducts(nextProducts);
-  }
-
-  function decrease(productId, size) {
-    const nextProducts =
-      decreaseProductSelection(productId, size);
+      removeProductFromRequestList(
+        productId
+      );
 
     setProducts(nextProducts);
   }
 
   function clearList() {
-    const confirmed = window.confirm(
-      'Vuoi svuotare tutta la lista?'
-    );
+    const confirmed =
+      window.confirm(
+        'Vuoi svuotare tutto il carrello?'
+      );
 
     if (!confirmed) {
       return;
@@ -159,21 +176,25 @@ export default function RequestListPage() {
     setProducts([]);
   }
 
-  const orderTotal = products.reduce(
-    (total, product) =>
-      total + getProductTotal(product),
-    0
-  );
+  const orderTotal =
+    products.reduce(
+      (total, product) =>
+        total +
+        getProductTotal(product),
+      0
+    );
 
-  const totalSelections = products.reduce(
-    (total, product) =>
-      total + getSelectedCount(product),
-    0
-  );
+  const totalSelections =
+    products.reduce(
+      (total, product) =>
+        total +
+        getSelectedCount(product),
+      0
+    );
 
   return (
     <>
-      <Header title="Lista prodotti" />
+      <Header title="Carrello" />
 
       <main className="mx-auto max-w-3xl px-5 pb-32 pt-6">
         <Link
@@ -185,26 +206,29 @@ export default function RequestListPage() {
 
         <div className="mt-6">
           <h1 className="text-4xl font-black text-gray-900">
-            La tua lista
+            Il tuo carrello
           </h1>
 
           <p className="mt-2 text-gray-500">
             {products.length === 1
-              ? '1 prodotto nella lista'
-              : `${products.length} prodotti nella lista`}
+              ? '1 prodotto nel carrello'
+              : `${products.length} prodotti nel carrello`}
           </p>
         </div>
 
         {products.length === 0 ? (
           <section className="mt-8 rounded-3xl bg-white p-8 text-center shadow-sm">
-            <div className="text-5xl">📋</div>
+            <div className="text-5xl">
+              🛒
+            </div>
 
             <h2 className="mt-4 text-2xl font-black text-gray-900">
-              La lista è vuota
+              Il carrello è vuoto
             </h2>
 
             <p className="mt-2 text-gray-500">
-              Aggiungi uno o più prodotti dal catalogo.
+              Aggiungi uno o più prodotti
+              dal catalogo.
             </p>
 
             <Link
@@ -217,166 +241,241 @@ export default function RequestListPage() {
         ) : (
           <>
             <section className="mt-8 space-y-4">
-              {products.map((product) => {
-                const category =
-                  getCategoryMeta(product.category);
+              {products.map(
+                (product) => {
+                  const category =
+                    getCategoryMeta(
+                      product.category
+                    );
 
-                const availableSizes =
-                  getAvailableSizes(product);
+                  const availableSizes =
+                    getAvailableSizes(
+                      product
+                    );
 
-                const productTotal =
-                  getProductTotal(product);
+                  const productTotal =
+                    getProductTotal(
+                      product
+                    );
 
-                return (
-                  <article
-                    key={product.id}
-                    className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
-                  >
-                    <div className="flex items-start gap-4">
-                      <Link
-                        href={`/product/${product.id}`}
-                        className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-4xl"
-                      >
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span>{category.emoji}</span>
-                        )}
-                      </Link>
-
-                      <div className="min-w-0 flex-1">
+                  return (
+                    <article
+                      key={product.id}
+                      className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex items-start gap-4">
                         <Link
                           href={`/product/${product.id}`}
-                          className="block"
+                          className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-4xl"
                         >
-                          <h2 className="text-lg font-black text-gray-900">
-                            {product.name}
-                          </h2>
+                          <img
+                            src={`/api/product-image/${encodeURIComponent(
+                              product.id
+                            )}`}
+                            alt={
+                              product.name
+                            }
+                            className="h-full w-full object-cover"
+                            onError={(
+                              event
+                            ) => {
+                              event.currentTarget.style.display =
+                                'none';
 
-                          <p className="mt-1 text-sm font-bold text-green-700">
-                            {category.emoji}{' '}
-                            {category.label}
-                          </p>
+                              const fallback =
+                                event
+                                  .currentTarget
+                                  .nextElementSibling;
 
-                          <p className="mt-1 text-sm text-gray-500">
-                            {product.brand || 'Brand'}
-                          </p>
+                              if (
+                                fallback
+                              ) {
+                                fallback.style.display =
+                                  'flex';
+                              }
+                            }}
+                          />
 
-                          <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-400">
-                            Codice: {product.id}
-                          </p>
+                          <span
+                            className="hidden h-full w-full items-center justify-center"
+                            aria-hidden="true"
+                          >
+                            {
+                              category.emoji
+                            }
+                          </span>
                         </Link>
+
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/product/${product.id}`}
+                            className="block"
+                          >
+                            <h2 className="text-lg font-black text-gray-900">
+                              {
+                                product.name
+                              }
+                            </h2>
+
+                            <p className="mt-1 text-sm font-bold text-green-700">
+                              {
+                                category.emoji
+                              }{' '}
+                              {
+                                category.label
+                              }
+                            </p>
+
+                            <p className="mt-1 text-sm text-gray-500">
+                              {product.brand ||
+                                'Brand'}
+                            </p>
+
+                            <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-400">
+                              Codice:{' '}
+                              {
+                                product.id
+                              }
+                            </p>
+                          </Link>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeProduct(
+                              product.id
+                            )
+                          }
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-black text-red-600 transition active:scale-95"
+                          aria-label={`Rimuovi ${product.name} dal carrello`}
+                        >
+                          ×
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeProduct(product.id)
-                        }
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-black text-red-600 transition active:scale-95"
-                        aria-label={`Rimuovi ${product.name}`}
-                      >
-                        ×
-                      </button>
-                    </div>
+                      {product.description ? (
+                        <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-gray-600">
+                          {
+                            product.description
+                          }
+                        </p>
+                      ) : null}
 
-                    {product.description ? (
-                      <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-gray-600">
-                        {product.description}
-                      </p>
-                    ) : null}
+                      {availableSizes.length >
+                      0 ? (
+                        <div className="mt-5 border-t border-gray-100 pt-5">
+                          <p className="mb-3 text-sm font-black text-gray-900">
+                            Quantità
+                            selezionate
+                          </p>
 
-                    {availableSizes.length > 0 ? (
-  <div className="mt-5 border-t border-gray-100 pt-5">
-    <p className="mb-3 text-sm font-black text-gray-900">
-      Quantità selezionate
-    </p>
+                          <div className="space-y-2">
+                            {availableSizes
+                              .filter(
+                                (
+                                  size
+                                ) =>
+                                  Number(
+                                    product
+                                      .selections?.[
+                                      size
+                                        .key
+                                    ]
+                                  ) >
+                                  0
+                              )
+                              .map(
+                                (
+                                  size
+                                ) => {
+                                  const quantity =
+                                    Number(
+                                      product
+                                        .selections?.[
+                                        size
+                                          .key
+                                      ]
+                                    ) ||
+                                    0;
 
-    <div className="space-y-2">
-      {availableSizes
-        .filter(
-          (size) =>
-            Number(
-              product.selections?.[
-                size.key
-              ]
-            ) > 0
-        )
-        .map((size) => {
-          const quantity =
-            Number(
-              product.selections?.[
-                size.key
-              ]
-            ) || 0;
+                                  const subtotal =
+                                    Number(
+                                      size.price
+                                    ) *
+                                    quantity;
 
-          const subtotal =
-            Number(size.price) *
-            quantity;
+                                  return (
+                                    <div
+                                      key={
+                                        size.key
+                                      }
+                                      className="flex items-center justify-between gap-4 rounded-2xl bg-gray-50 px-4 py-3"
+                                    >
+                                      <div>
+                                        <p className="font-black text-gray-900">
+                                          {
+                                            size.label
+                                          }{' '}
+                                          ×{' '}
+                                          {
+                                            quantity
+                                          }
+                                        </p>
 
-          return (
-            <div
-              key={size.key}
-              className="flex items-center justify-between gap-4 rounded-2xl bg-gray-50 px-4 py-3"
-            >
-              <div>
-                <p className="font-black text-gray-900">
-                  {size.label} ×{' '}
-                  {quantity}
-                </p>
+                                        <p className="mt-1 text-xs font-bold text-gray-400">
+                                          {formatPrice(
+                                            size.price
+                                          )}{' '}
+                                          cad.
+                                        </p>
+                                      </div>
 
-                <p className="mt-1 text-xs font-bold text-gray-400">
-                  {formatPrice(
-                    size.price
-                  )}{' '}
-                  cad.
-                </p>
-              </div>
+                                      <strong className="text-base text-gray-900">
+                                        {formatPrice(
+                                          subtotal
+                                        )}
+                                      </strong>
+                                    </div>
+                                  );
+                                }
+                              )}
+                          </div>
 
-              <strong className="text-base text-gray-900">
-                {formatPrice(
-                  subtotal
-                )}
-              </strong>
-            </div>
-          );
-        })}
-    </div>
+                          {productTotal >
+                          0 ? (
+                            <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
+                              <span className="font-bold text-emerald-800">
+                                Subtotale
+                              </span>
 
-    {productTotal > 0 ? (
-      <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
-        <span className="font-bold text-emerald-800">
-          Subtotale
-        </span>
+                              <strong className="text-xl text-emerald-800">
+                                {formatPrice(
+                                  productTotal
+                                )}
+                              </strong>
+                            </div>
+                          ) : null}
 
-        <strong className="text-xl text-emerald-800">
-          {formatPrice(
-            productTotal
-          )}
-        </strong>
-      </div>
-    ) : null}
-
-    <Link
-      href={`/product/${product.id}`}
-      className="mt-3 flex w-full items-center justify-center rounded-2xl border border-green-200 bg-green-50 p-3 font-black text-green-700 transition active:scale-[0.98]"
-    >
-      ✏️ Modifica quantità
-    </Link>
-  </div>
-) : (
-  <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
-    Nessun prezzo disponibile per
-    questo prodotto.
-  </div>
-)}
-                  </article>
-                );
-              })}
+                          <Link
+                            href={`/product/${product.id}`}
+                            className="mt-3 flex w-full items-center justify-center rounded-2xl border border-green-200 bg-green-50 p-3 font-black text-green-700 transition active:scale-[0.98]"
+                          >
+                            ✏️ Modifica
+                            quantità
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
+                          Nessun prezzo
+                          disponibile per
+                          questo prodotto.
+                        </div>
+                      )}
+                    </article>
+                  );
+                }
+              )}
             </section>
 
             <section className="mt-6 rounded-3xl bg-gray-900 p-6 text-white shadow-lg">
@@ -387,14 +486,17 @@ export default function RequestListPage() {
                   </p>
 
                   <p className="mt-1 text-xs text-gray-400">
-                    {totalSelections === 1
+                    {totalSelections ===
+                    1
                       ? '1 selezione'
                       : `${totalSelections} selezioni`}
                   </p>
                 </div>
 
                 <strong className="text-3xl font-black">
-                  {formatPrice(orderTotal)}
+                  {formatPrice(
+                    orderTotal
+                  )}
                 </strong>
               </div>
             </section>
@@ -405,8 +507,9 @@ export default function RequestListPage() {
               />
             ) : (
               <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-center text-sm font-bold text-amber-700">
-                Seleziona almeno una pezzatura per
-                inviare la richiesta.
+                Seleziona almeno una
+                pezzatura per inviare la
+                richiesta.
               </div>
             )}
 
@@ -416,7 +519,7 @@ export default function RequestListPage() {
                 onClick={clearList}
                 className="w-full rounded-2xl bg-red-50 p-4 font-black text-red-700"
               >
-                🗑️ Svuota lista
+                🗑️ Svuota carrello
               </button>
             </section>
           </>
