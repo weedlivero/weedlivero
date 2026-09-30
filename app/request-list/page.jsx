@@ -9,8 +9,6 @@ import {
   clearRequestList,
   getRequestList,
   removeProductFromRequestList,
-  increaseProductSelection,
-  decreaseProductSelection,
 } from '@/lib/requestList';
 
 function getCategoryMeta(category) {
@@ -293,114 +291,89 @@ export default function RequestListPage() {
                     ) : null}
 
                     {availableSizes.length > 0 ? (
-                      <div className="mt-5 border-t border-gray-100 pt-5">
-                        <p className="mb-3 text-sm font-black text-gray-900">
-                          Scegli quantità
-                        </p>
+  <div className="mt-5 border-t border-gray-100 pt-5">
+    <p className="mb-3 text-sm font-black text-gray-900">
+      Quantità selezionate
+    </p>
 
-                        <div className="space-y-2">
-                          {availableSizes.map((size) => {
-                            const quantity =
-                              Number(
-                                product.selections?.[
-                                  size.key
-                                ]
-                              ) || 0;
+    <div className="space-y-2">
+      {availableSizes
+        .filter(
+          (size) =>
+            Number(
+              product.selections?.[
+                size.key
+              ]
+            ) > 0
+        )
+        .map((size) => {
+          const quantity =
+            Number(
+              product.selections?.[
+                size.key
+              ]
+            ) || 0;
 
-                            const subtotal =
-                              Number(size.price) *
-                              quantity;
+          const subtotal =
+            Number(size.price) *
+            quantity;
 
-                            return (
-                              <div
-                                key={size.key}
-                                className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50 p-3"
-                              >
-                                <div>
-                                  <p className="font-black text-gray-900">
-                                    {size.label}
-                                  </p>
+          return (
+            <div
+              key={size.key}
+              className="flex items-center justify-between gap-4 rounded-2xl bg-gray-50 px-4 py-3"
+            >
+              <div>
+                <p className="font-black text-gray-900">
+                  {size.label} ×{' '}
+                  {quantity}
+                </p>
 
-                                  <p className="text-sm font-bold text-green-700">
-                                    {formatPrice(
-                                      size.price
-                                    )}
-                                  </p>
-                                </div>
+                <p className="mt-1 text-xs font-bold text-gray-400">
+                  {formatPrice(
+                    size.price
+                  )}{' '}
+                  cad.
+                </p>
+              </div>
 
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      decrease(
-                                        product.id,
-                                        size.key
-                                      )
-                                    }
-                                    disabled={
-                                      quantity === 0
-                                    }
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-black text-gray-700 shadow-sm disabled:opacity-30"
-                                  >
-                                    −
-                                  </button>
+              <strong className="text-base text-gray-900">
+                {formatPrice(
+                  subtotal
+                )}
+              </strong>
+            </div>
+          );
+        })}
+    </div>
 
-                                  <span className="min-w-8 text-center text-lg font-black text-gray-900">
-                                    {quantity}
-                                  </span>
+    {productTotal > 0 ? (
+      <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
+        <span className="font-bold text-emerald-800">
+          Subtotale
+        </span>
 
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      increase(
-                                        product.id,
-                                        size.key
-                                      )
-                                    }
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-xl font-black text-white shadow-sm transition active:scale-95"
-                                  >
-                                    +
-                                  </button>
-                                </div>
+        <strong className="text-xl text-emerald-800">
+          {formatPrice(
+            productTotal
+          )}
+        </strong>
+      </div>
+    ) : null}
 
-                                <div className="w-20 text-right">
-                                  {quantity > 0 ? (
-                                    <strong className="text-sm text-gray-900">
-                                      {formatPrice(
-                                        subtotal
-                                      )}
-                                    </strong>
-                                  ) : (
-                                    <span className="text-sm text-gray-300">
-                                      —
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {productTotal > 0 ? (
-                          <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-50 p-4">
-                            <span className="font-bold text-emerald-800">
-                              Subtotale
-                            </span>
-
-                            <strong className="text-xl text-emerald-800">
-                              {formatPrice(
-                                productTotal
-                              )}
-                            </strong>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
-                        Nessun prezzo disponibile per
-                        questo prodotto.
-                      </div>
-                    )}
+    <Link
+      href={`/product/${product.id}`}
+      className="mt-3 flex w-full items-center justify-center rounded-2xl border border-green-200 bg-green-50 p-3 font-black text-green-700 transition active:scale-[0.98]"
+    >
+      ✏️ Modifica quantità
+    </Link>
+  </div>
+) : (
+  <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-700">
+    Nessun prezzo disponibile per
+    questo prodotto.
+  </div>
+)}
                   </article>
                 );
               })}

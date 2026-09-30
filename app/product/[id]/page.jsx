@@ -127,7 +127,7 @@ export default async function ProductPage({ params }) {
     <AccessGate>
       <Header title="Prodotto" />
 
-      <main className="mx-auto max-w-3xl px-5 pb-32 pt-6">
+      <main className="mx-auto max-w-3xl px-5 pb-48 pt-6">
         <Link
           href={`/category/${product.category}`}
           className="text-sm font-bold text-gray-500"
@@ -224,25 +224,9 @@ export default async function ProductPage({ params }) {
                     </span>
                   </div>
                 ) : null}
+                <AddToRequestListButton product={product} />
 
-                {prices.length > 0 ? (
-                  <div className="mt-4 divide-y divide-emerald-100 overflow-hidden rounded-2xl border border-emerald-100 bg-white">
-                    {prices.map((price) => (
-                      <div
-                        key={price.label}
-                        className="flex items-center justify-between gap-4 px-4 py-3"
-                      >
-                        <span className="text-sm font-semibold text-gray-600">
-                          {price.label}
-                        </span>
-
-                        <strong className="text-base text-gray-900">
-                          {formatPrice(price.value)}
-                        </strong>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
+                
 
                 {product.price_promo ? (
                   <div className="mt-5 rounded-2xl bg-green-600 p-4 text-center text-white">
@@ -272,9 +256,7 @@ export default async function ProductPage({ params }) {
           </div>
         </article>
 
-        <div className="mt-6">
-          <AddToRequestListButton product={product} />
-        </div>
+        
 
         <div className="mt-4">
           <TelegramButton />
