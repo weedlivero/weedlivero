@@ -226,10 +226,14 @@ export default function AdminProductsList({ products = [] }) {
           product.brand,
           product.category,
         ]
-          .map((value) => String(value || '').toLowerCase())
+          .map((value) =>
+            String(value || '').toLowerCase()
+          )
           .join(' ');
 
-        return searchableText.includes(normalizedQuery);
+        return searchableText.includes(
+          normalizedQuery
+        );
       })
       .sort((firstProduct, secondProduct) => {
         const priorityDifference =
@@ -240,7 +244,9 @@ export default function AdminProductsList({ products = [] }) {
           return priorityDifference;
         }
 
-        return String(firstProduct.name || '').localeCompare(
+        return String(
+          firstProduct.name || ''
+        ).localeCompare(
           String(secondProduct.name || ''),
           'it',
           {
@@ -248,7 +254,11 @@ export default function AdminProductsList({ products = [] }) {
           }
         );
       });
-  }, [products, normalizedQuery, selectedFilter]);
+  }, [
+    products,
+    normalizedQuery,
+    selectedFilter,
+  ]);
 
   function clearFilters() {
     setQuery('');
@@ -260,13 +270,16 @@ export default function AdminProductsList({ products = [] }) {
       <div className="mt-5 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex gap-2 overflow-x-auto pb-2">
           {filters.map((filter) => {
-            const selected = selectedFilter === filter.id;
+            const selected =
+              selectedFilter === filter.id;
 
             return (
               <button
                 key={filter.id}
                 type="button"
-                onClick={() => setSelectedFilter(filter.id)}
+                onClick={() =>
+                  setSelectedFilter(filter.id)
+                }
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-black transition active:scale-[0.98] ${
                   selected
                     ? 'bg-gray-900 text-white shadow-md'
@@ -283,7 +296,9 @@ export default function AdminProductsList({ products = [] }) {
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) =>
+              setQuery(event.target.value)
+            }
             placeholder="Cerca per codice, nome, brand o categoria..."
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 outline-none transition focus:border-green-500 focus:bg-white"
           />
@@ -294,7 +309,8 @@ export default function AdminProductsList({ products = [] }) {
             Risultati: {filteredProducts.length}
           </p>
 
-          {normalizedQuery || selectedFilter !== 'all' ? (
+          {normalizedQuery ||
+          selectedFilter !== 'all' ? (
             <button
               type="button"
               onClick={clearFilters}
@@ -308,7 +324,11 @@ export default function AdminProductsList({ products = [] }) {
 
       <div className="mt-5 space-y-4">
         {filteredProducts.map((product) => {
-          const categoryInfo = getCategoryInfo(product.category);
+          const categoryInfo =
+            getCategoryInfo(product.category);
+
+          const soldOut =
+            product.sold_out === true;
 
           return (
             <Link
@@ -316,20 +336,37 @@ export default function AdminProductsList({ products = [] }) {
               href={`/admin/products/${encodeURIComponent(
                 product.id
               )}/edit`}
-              className="block rounded-3xl border border-gray-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.995]"
+              className={`block rounded-3xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.995] ${
+                soldOut
+                  ? 'border-red-100 bg-red-50/30'
+                  : 'border-gray-100 bg-white'
+              }`}
             >
               <div className="flex items-start gap-4">
-                <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100">
+                <div
+                  className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 ${
+                    soldOut
+                      ? 'grayscale opacity-70'
+                      : ''
+                  }`}
+                >
                   {product.image_url ? (
                     <img
                       src={product.image_url}
-                      alt={product.name || 'Prodotto'}
+                      alt={
+                        product.name ||
+                        'Prodotto'
+                      }
                       loading="lazy"
                       className="h-full w-full object-cover"
                     />
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center">
-                      <CategoryIcon category={product.category} />
+                      <CategoryIcon
+                        category={
+                          product.category
+                        }
+                      />
 
                       <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
                         Nessuna foto
@@ -342,17 +379,25 @@ export default function AdminProductsList({ products = [] }) {
                       ⭐
                     </span>
                   ) : null}
+
+                  {soldOut ? (
+                    <span className="absolute bottom-2 left-2 rounded-full bg-red-600 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white shadow-md">
+                      Esaurito
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="truncate text-lg font-black text-gray-900">
-                        {product.name || 'Prodotto senza nome'}
+                        {product.name ||
+                          'Prodotto senza nome'}
                       </h3>
 
                       <p className="mt-1 truncate text-sm text-gray-500">
-                        {product.brand || 'Brand non indicato'}
+                        {product.brand ||
+                          'Brand non indicato'}
                       </p>
                     </div>
 
@@ -363,7 +408,9 @@ export default function AdminProductsList({ products = [] }) {
                           : 'bg-red-100 text-red-700'
                       }`}
                     >
-                      {product.active ? 'ATTIVO' : 'NON ATTIVO'}
+                      {product.active
+                        ? 'ATTIVO'
+                        : 'NON ATTIVO'}
                     </span>
                   </div>
 
@@ -371,12 +418,19 @@ export default function AdminProductsList({ products = [] }) {
                     <span
                       className={`rounded-full px-3 py-1 text-[11px] font-black ${categoryInfo.badgeClass}`}
                     >
-                      {categoryInfo.emoji} {categoryInfo.label}
+                      {categoryInfo.emoji}{' '}
+                      {categoryInfo.label}
                     </span>
 
                     {product.featured ? (
                       <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-black text-amber-700">
                         ⭐ IN EVIDENZA
+                      </span>
+                    ) : null}
+
+                    {soldOut ? (
+                      <span className="rounded-full bg-red-100 px-3 py-1 text-[11px] font-black text-red-700">
+                        🔴 ESAURITO
                       </span>
                     ) : null}
                   </div>
@@ -399,7 +453,8 @@ export default function AdminProductsList({ products = [] }) {
             </p>
 
             <p className="mt-2 text-sm text-gray-500">
-              Prova a cambiare filtro o termine di ricerca.
+              Prova a cambiare filtro o
+              termine di ricerca.
             </p>
 
             <button

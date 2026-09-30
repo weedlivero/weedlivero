@@ -8,7 +8,13 @@ function CategoryIcon({ category }) {
 
   if (category === 'vapes') {
     return (
-      <svg viewBox="0 0 64 64" className={base} fill="none" stroke="currentColor" strokeWidth="4">
+      <svg
+        viewBox="0 0 64 64"
+        className={base}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      >
         <rect x="14" y="30" width="36" height="14" rx="7" />
         <path d="M46 30c6-10-4-12 2-20" />
         <path d="M32 30c4-7-3-9 1-15" />
@@ -18,7 +24,13 @@ function CategoryIcon({ category }) {
 
   if (category === 'hash') {
     return (
-      <svg viewBox="0 0 64 64" className={base} fill="none" stroke="currentColor" strokeWidth="4">
+      <svg
+        viewBox="0 0 64 64"
+        className={base}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      >
         <rect x="14" y="18" width="36" height="30" rx="6" />
         <path d="M22 26h20M22 34h14M22 42h18" />
       </svg>
@@ -27,7 +39,13 @@ function CategoryIcon({ category }) {
 
   if (category === 'concentrate') {
     return (
-      <svg viewBox="0 0 64 64" className={base} fill="none" stroke="currentColor" strokeWidth="4">
+      <svg
+        viewBox="0 0 64 64"
+        className={base}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      >
         <path d="M32 8C22 22 16 31 16 42a16 16 0 0 0 32 0C48 31 42 22 32 8Z" />
         <path d="M36 44a6 6 0 0 1-8 4" />
       </svg>
@@ -36,7 +54,13 @@ function CategoryIcon({ category }) {
 
   if (category === 'edibles') {
     return (
-      <svg viewBox="0 0 64 64" className={base} fill="none" stroke="currentColor" strokeWidth="4">
+      <svg
+        viewBox="0 0 64 64"
+        className={base}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      >
         <circle cx="32" cy="32" r="20" />
         <circle cx="24" cy="26" r="2" fill="currentColor" />
         <circle cx="38" cy="24" r="2" fill="currentColor" />
@@ -47,7 +71,13 @@ function CategoryIcon({ category }) {
   }
 
   return (
-    <svg viewBox="0 0 64 64" className={base} fill="none" stroke="currentColor" strokeWidth="4">
+    <svg
+      viewBox="0 0 64 64"
+      className={base}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="4"
+    >
       <path d="M32 52C20 38 18 22 32 10c14 12 12 28 0 42Z" />
       <path d="M32 52V18" />
       <path d="M32 34c-8-2-12-8-14-14" />
@@ -57,10 +87,14 @@ function CategoryIcon({ category }) {
 }
 
 export default function ProductCard({ product }) {
+  const soldOut = product.sold_out === true;
+
   return (
     <Link
       href={`/product/${product.id}`}
-      className="block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]"
+      className={`block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98] ${
+        soldOut ? 'opacity-95' : ''
+      }`}
     >
       <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 to-green-50">
 
@@ -70,12 +104,32 @@ export default function ProductCard({ product }) {
             alt={product.name}
             fill
             sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-            className="object-cover"
+            className={`object-cover transition-all duration-300 ${
+              soldOut
+                ? 'grayscale opacity-45'
+                : ''
+            }`}
             loading="lazy"
           />
         ) : (
-          <CategoryIcon category={product.category} />
+          <div
+            className={
+              soldOut
+                ? 'grayscale opacity-45'
+                : ''
+            }
+          >
+            <CategoryIcon category={product.category} />
+          </div>
         )}
+
+        {soldOut ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <span className="rounded-full bg-red-600 px-5 py-2 text-sm font-black uppercase tracking-wider text-white shadow-xl">
+              Esaurito
+            </span>
+          </div>
+        ) : null}
 
       </div>
 
@@ -93,13 +147,27 @@ export default function ProductCard({ product }) {
 
         </div>
 
-        <h3 className="text-xl font-black text-gray-900">
-          {product.name}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-xl font-black text-gray-900">
+            {product.name}
+          </h3>
+
+          {soldOut ? (
+            <span className="shrink-0 rounded-full bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-red-600">
+              Esaurito
+            </span>
+          ) : null}
+        </div>
 
         <p className="mt-2 line-clamp-2 text-sm text-gray-500">
           {product.description}
         </p>
+
+        {soldOut ? (
+          <p className="mt-4 text-sm font-bold text-red-600">
+            Tornerà presto disponibile
+          </p>
+        ) : null}
 
       </div>
     </Link>

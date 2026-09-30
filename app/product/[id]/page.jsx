@@ -88,6 +88,8 @@ export default async function ProductPage({ params }) {
     notFound();
   }
 
+  const soldOut = product.sold_out === true;
+
   const prices = [
     {
       label: 'Prezzo unitario',
@@ -136,11 +138,23 @@ export default async function ProductPage({ params }) {
         </Link>
 
         <article className="mt-5 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-md">
-          <ProductImageLightbox
-            imageUrl={product.image_url}
-            productName={product.name}
-            fallback={getCategoryFallback(product.category)}
-          />
+          <div className="relative">
+            <div className={soldOut ? 'grayscale opacity-70' : ''}>
+              <ProductImageLightbox
+                imageUrl={product.image_url}
+                productName={product.name}
+                fallback={getCategoryFallback(product.category)}
+              />
+            </div>
+
+            {soldOut ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                <span className="rounded-full bg-red-600 px-6 py-3 text-sm font-black uppercase tracking-widest text-white shadow-2xl">
+                  Esaurito
+                </span>
+              </div>
+            ) : null}
+          </div>
 
           <div className="p-6">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -148,14 +162,34 @@ export default async function ProductPage({ params }) {
                 {product.brand || 'Brand'}
               </p>
 
-              <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-                {product.id}
-              </span>
+              <div className="flex items-center gap-2">
+                {soldOut ? (
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black uppercase tracking-wide text-red-600">
+                    Esaurito
+                  </span>
+                ) : null}
+
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                  {product.id}
+                </span>
+              </div>
             </div>
 
             <h1 className="text-4xl font-black tracking-tight text-gray-900">
               {product.name}
             </h1>
+
+            {soldOut ? (
+              <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-5">
+                <p className="text-sm font-black uppercase tracking-wide text-red-600">
+                  Prodotto esaurito
+                </p>
+
+                <p className="mt-2 text-base font-bold text-red-700">
+                  Tornerà presto disponibile.
+                </p>
+              </div>
+            ) : null}
 
             {product.description ? (
               <section className="mt-5">
@@ -224,9 +258,20 @@ export default async function ProductPage({ params }) {
                     </span>
                   </div>
                 ) : null}
-                <AddToRequestListButton product={product} />
 
-                
+                {!soldOut ? (
+                  <AddToRequestListButton product={product} />
+                ) : (
+                  <div className="mt-5 rounded-2xl bg-white p-5 text-center shadow-sm">
+                    <p className="text-lg font-black text-red-600">
+                      ESAURITO
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold text-gray-500">
+                      Le quantità non sono attualmente disponibili.
+                    </p>
+                  </div>
+                )}
 
                 {product.price_promo ? (
                   <div className="mt-5 rounded-2xl bg-green-600 p-4 text-center text-white">
@@ -255,8 +300,6 @@ export default async function ProductPage({ params }) {
             ) : null}
           </div>
         </article>
-
-        
 
         <div className="mt-4">
           <TelegramButton />

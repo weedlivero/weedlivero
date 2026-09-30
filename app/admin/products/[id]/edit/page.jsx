@@ -53,8 +53,9 @@ export default function EditProductPage() {
   menu_order: 0,
 
   active: true,
-  featured: false,
-  pdf_badge: '',
+sold_out: false,
+featured: false,
+pdf_badge: '',
 });
 
   function updateField(field, value) {
@@ -152,6 +153,7 @@ export default function EditProductPage() {
       cbd: String(sourceForm.cbd || '').trim(),
       active: sourceForm.active === true,
       featured: sourceForm.featured === true,
+      sold_out: sourceForm.sold_out === true,
     };
   }
 
@@ -651,6 +653,23 @@ Disponibile fino a esaurimento.`}
                   className="h-5 w-5"
                 />
               </label>
+              <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+  <span className="font-bold text-gray-800">
+    Prodotto esaurito
+  </span>
+
+  <input
+    type="checkbox"
+    checked={Boolean(form.sold_out)}
+    onChange={(event) =>
+      updateField(
+        'sold_out',
+        event.target.checked
+      )
+    }
+    className="h-5 w-5"
+  />
+</label>
             </div>
           </section>
 

@@ -144,6 +144,7 @@ const updates = {
     numberOrNull(body.menu_order) ?? 0,
 
   active: body.active === true,
+  sold_out: body.sold_out === true,
   featured: body.featured === true,
   pdf_badge: String(body.pdf_badge ?? '').trim(),
 };

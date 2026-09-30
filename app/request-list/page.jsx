@@ -2,22 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+
 import Header from '@/components/Header';
 import TelegramButton from '@/components/TelegramButton';
 import RequestContactButtons from '@/components/RequestContactButtons';
+
 import {
   clearRequestList,
   getRequestList,
   removeProductFromRequestList,
+  saveRequestList,
 } from '@/lib/requestList';
 
 function getCategoryMeta(category) {
   switch (category) {
     case 'weed':
-      return { emoji: '🌿', label: 'Weed' };
+      return {
+        emoji: '🌿',
+        label: 'Weed',
+      };
 
     case 'hash':
-      return { emoji: '🟫', label: 'Hash' };
+      return {
+        emoji: '🟫',
+        label: 'Hash',
+      };
 
     case 'concentrate':
       return {
@@ -113,16 +122,17 @@ function getAvailableSizes(product) {
 }
 
 function getProductTotal(product) {
-  const sizes =
-    getAvailableSizes(product);
+  if (product.sold_out === true) {
+    return 0;
+  }
+
+  const sizes = getAvailableSizes(product);
 
   return sizes.reduce(
     (total, size) => {
       const quantity =
         Number(
-          product.selections?.[
-            size.key
-          ]
+          product.selections?.[size.key]
         ) || 0;
 
       return (
@@ -135,6 +145,10 @@ function getProductTotal(product) {
 }
 
 function getSelectedCount(product) {
+  if (product.sold_out === true) {
+    return 0;
+  }
+
   return Object.values(
     product.selections || {}
   ).reduce(
@@ -146,11 +160,126 @@ function getSelectedCount(product) {
 }
 
 export default function RequestListPage() {
-  const [products, setProducts] =
-    useState([]);
+  const [products, setProducts] = useState([]);
+  const [checkingAvailability, setCheckingAvailability] =
+    useState(true);
 
   useEffect(() => {
-    setProducts(getRequestList());
+    let cancelled = false;
+
+    async function loadCart() {
+      const savedProducts = getRequestList();
+
+      if (!savedProducts.length) {
+        if (!cancelled) {
+          setProducts([]);
+          setCheckingAvailability(false);
+        }
+
+        return;
+      }
+
+      try {
+        const checkedProducts =
+          await Promise.all(
+            savedProducts.map(async (savedProduct) => {
+              try {
+                const response = await fetch(
+                  `/api/products/${encodeURIComponent(
+                    savedProduct.id
+                  )}`,
+                  {
+                    cache: 'no-store',
+                  }
+                );
+
+                if (!response.ok) {
+                  return savedProduct;
+                }
+
+                const result =
+                  await response.json();
+
+                const currentProduct =
+                  result?.product;
+
+                if (!currentProduct) {
+                  return savedProduct;
+                }
+
+                /*
+                 * Manteniamo nel carrello
+                 * le quantità già selezionate,
+                 * ma aggiorniamo lo stato reale
+                 * del prodotto dal database.
+                 */
+                if (
+                  currentProduct.sold_out === true
+                ) {
+                  return {
+                    ...savedProduct,
+                    ...currentProduct,
+                    selections: {},
+                    sold_out: true,
+                  };
+                }
+
+                return {
+                  ...savedProduct,
+                  ...currentProduct,
+                  selections:
+                    savedProduct.selections || {},
+                  sold_out: false,
+                };
+              } catch (error) {
+                console.error(
+                  'Errore controllo disponibilità:',
+                  savedProduct.id,
+                  error
+                );
+
+                return savedProduct;
+              }
+            })
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        /*
+         * Salviamo nel localStorage
+         * lo stato aggiornato.
+         *
+         * In particolare, se un prodotto è
+         * diventato esaurito, le quantità
+         * precedentemente selezionate vengono
+         * azzerate.
+         */
+        saveRequestList(checkedProducts);
+
+        setProducts(checkedProducts);
+      } catch (error) {
+        console.error(
+          'Errore caricamento carrello:',
+          error
+        );
+
+        if (!cancelled) {
+          setProducts(savedProducts);
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingAvailability(false);
+        }
+      }
+    }
+
+    loadCart();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function removeProduct(productId) {
@@ -192,6 +321,19 @@ export default function RequestListPage() {
       0
     );
 
+  const soldOutProducts =
+    products.filter(
+      (product) =>
+        product.sold_out === true
+    );
+
+  const availableProducts =
+    products.filter(
+      (product) =>
+        product.sold_out !== true &&
+        getSelectedCount(product) > 0
+    );
+
   return (
     <>
       <Header title="Carrello" />
@@ -216,7 +358,17 @@ export default function RequestListPage() {
           </p>
         </div>
 
-        {products.length === 0 ? (
+        {checkingAvailability ? (
+          <section className="mt-8 rounded-3xl bg-white p-8 text-center shadow-sm">
+            <div className="text-3xl">
+              🛒
+            </div>
+
+            <p className="mt-3 font-bold text-gray-600">
+              Controllo disponibilità prodotti...
+            </p>
+          </section>
+        ) : products.length === 0 ? (
           <section className="mt-8 rounded-3xl bg-white p-8 text-center shadow-sm">
             <div className="text-5xl">
               🛒
@@ -240,6 +392,24 @@ export default function RequestListPage() {
           </section>
         ) : (
           <>
+            {soldOutProducts.length > 0 ? (
+              <section className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5">
+                <p className="text-sm font-black uppercase tracking-wide text-red-600">
+                  Attenzione
+                </p>
+
+                <p className="mt-2 text-sm font-bold text-red-700">
+                  {soldOutProducts.length === 1
+                    ? 'Un prodotto nel tuo carrello è diventato esaurito.'
+                    : `${soldOutProducts.length} prodotti nel tuo carrello sono diventati esauriti.`}
+                </p>
+
+                <p className="mt-1 text-sm text-red-600">
+                  Non verranno inclusi nella richiesta.
+                </p>
+              </section>
+            ) : null}
+
             <section className="mt-8 space-y-4">
               {products.map(
                 (product) => {
@@ -247,6 +417,9 @@ export default function RequestListPage() {
                     getCategoryMeta(
                       product.category
                     );
+
+                  const soldOut =
+                    product.sold_out === true;
 
                   const availableSizes =
                     getAvailableSizes(
@@ -261,20 +434,26 @@ export default function RequestListPage() {
                   return (
                     <article
                       key={product.id}
-                      className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
+                      className={`rounded-3xl border p-4 shadow-sm ${
+                        soldOut
+                          ? 'border-red-100 bg-red-50/40'
+                          : 'border-gray-100 bg-white'
+                      }`}
                     >
                       <div className="flex items-start gap-4">
                         <Link
                           href={`/product/${product.id}`}
-                          className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-4xl"
+                          className={`flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-4xl ${
+                            soldOut
+                              ? 'grayscale opacity-60'
+                              : ''
+                          }`}
                         >
                           <img
                             src={`/api/product-image/${encodeURIComponent(
                               product.id
                             )}`}
-                            alt={
-                              product.name
-                            }
+                            alt={product.name}
                             className="h-full w-full object-cover"
                             onError={(
                               event
@@ -311,13 +490,27 @@ export default function RequestListPage() {
                             href={`/product/${product.id}`}
                             className="block"
                           >
-                            <h2 className="text-lg font-black text-gray-900">
-                              {
-                                product.name
-                              }
-                            </h2>
+                            <div className="flex items-start justify-between gap-2">
+                              <h2 className="text-lg font-black text-gray-900">
+                                {
+                                  product.name
+                                }
+                              </h2>
 
-                            <p className="mt-1 text-sm font-bold text-green-700">
+                              {soldOut ? (
+                                <span className="shrink-0 rounded-full bg-red-600 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+                                  Esaurito
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <p
+                              className={`mt-1 text-sm font-bold ${
+                                soldOut
+                                  ? 'text-red-600'
+                                  : 'text-green-700'
+                              }`}
+                            >
                               {
                                 category.emoji
                               }{' '}
@@ -362,8 +555,22 @@ export default function RequestListPage() {
                         </p>
                       ) : null}
 
-                      {availableSizes.length >
-                      0 ? (
+                      {soldOut ? (
+                        <div className="mt-5 rounded-2xl border border-red-100 bg-white p-5 text-center">
+                          <p className="text-lg font-black text-red-600">
+                            ESAURITO
+                          </p>
+
+                          <p className="mt-1 text-sm font-bold text-gray-500">
+                            Tornerà presto disponibile.
+                          </p>
+
+                          <p className="mt-3 text-xs text-gray-400">
+                            Le quantità precedentemente selezionate sono state rimosse e questo prodotto non verrà incluso nella richiesta.
+                          </p>
+                        </div>
+                      ) : availableSizes.length >
+                        0 ? (
                         <div className="mt-5 border-t border-gray-100 pt-5">
                           <p className="mb-3 text-sm font-black text-gray-900">
                             Quantità
@@ -379,11 +586,9 @@ export default function RequestListPage() {
                                   Number(
                                     product
                                       .selections?.[
-                                      size
-                                        .key
+                                      size.key
                                     ]
-                                  ) >
-                                  0
+                                  ) > 0
                               )
                               .map(
                                 (
@@ -393,8 +598,7 @@ export default function RequestListPage() {
                                     Number(
                                       product
                                         .selections?.[
-                                        size
-                                          .key
+                                        size.key
                                       ]
                                     ) ||
                                     0;
@@ -501,9 +705,11 @@ export default function RequestListPage() {
               </div>
             </section>
 
-            {totalSelections > 0 ? (
+            {availableProducts.length >
+            0 &&
+            totalSelections > 0 ? (
               <RequestContactButtons
-                products={products}
+                products={availableProducts}
               />
             ) : (
               <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-center text-sm font-bold text-amber-700">
