@@ -47,7 +47,11 @@ export async function POST(request) {
     const body = await request.json();
 
     const product = {
-      id: String(body.id ?? '').trim().toUpperCase(),
+      id: String(body.id ?? '')
+  .trim()
+  .toUpperCase()
+  .replace(/\s*-\s*/g, '-')
+  .replace(/\s+/g, ''),
       name: String(body.name ?? '').trim(),
       brand: String(body.brand ?? '').trim(),
       category: String(body.category ?? '').trim(),

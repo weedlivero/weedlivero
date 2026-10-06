@@ -8,6 +8,7 @@ export const revalidate = 0;
 
 export default async function AdminProductsPage() {
   const products = await getAdminProducts();
+  
 
   return (
     <AdminLayout title="Prodotti">
