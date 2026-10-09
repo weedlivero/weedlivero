@@ -96,13 +96,13 @@ export default function UserPopup() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-5 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-5 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="user-popup-title"
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-7 text-center shadow-2xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-100 text-3xl">
+      <div className="max-h-[calc(100dvh-2.5rem)] w-full max-w-md overflow-y-auto rounded-[2rem] bg-white p-7 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-amber-100 text-3xl">
           📢
         </div>
 
