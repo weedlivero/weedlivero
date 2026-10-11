@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminMenuActions() {
   const [settings, setSettings] = useState(null);
@@ -173,71 +174,87 @@ export default function AdminMenuActions() {
 
   async function uploadPdf() {
     if (!file) {
-      setMessage(
-        '⚠️ Seleziona prima un file PDF.'
-      );
+      setMessage('⚠️ Seleziona prima un file PDF.');
+      return;
+    }
+
+    if (
+      !file.name.toLowerCase().endsWith('.pdf') ||
+      file.size <= 0 ||
+      file.size > 20 * 1024 * 1024
+    ) {
+      setMessage('⚠️ Seleziona un PDF valido, massimo 20 MB.');
       return;
     }
 
     try {
       setUploading(true);
-      setMessage('');
+      setMessage('Preparazione caricamento PDF...');
 
-      const formData = new FormData();
-      formData.append('file', file);
+      const prepareResponse = await fetch('/api/menu-upload/prepare', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+        }),
+      });
 
-      const response = await fetch(
-        '/api/menu-upload',
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const prepared = await prepareResponse.json();
 
-      const result = await response.json();
+      if (!prepareResponse.ok) {
+        throw new Error(prepared.error || 'Preparazione PDF non riuscita.');
+      }
 
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-            'Errore caricamento PDF'
-        );
+      if (!prepared.storagePath || !prepared.uploadToken || !prepared.uploadIntent) {
+        throw new Error('Autorizzazione upload incompleta.');
+      }
+
+      if (!supabase) {
+        throw new Error('Client Supabase non configurato.');
+      }
+
+      setMessage('Caricamento PDF su Supabase...');
+
+      const { error: uploadError } = await supabase.storage
+        .from('menu-pdf')
+        .uploadToSignedUrl(prepared.storagePath, prepared.uploadToken, file, {
+          contentType: 'application/pdf',
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      setMessage('Verifica e pubblicazione del PDF...');
+
+      const completeResponse = await fetch('/api/menu-upload/complete', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadIntent: prepared.uploadIntent }),
+      });
+
+      const completed = await completeResponse.json();
+
+      if (!completeResponse.ok) {
+        throw new Error(completed.error || 'Pubblicazione PDF non riuscita.');
       }
 
       setSettings((current) => ({
         ...current,
-        ...result.settings,
+        ...completed.settings,
       }));
 
       setFile(null);
+      const input = document.getElementById('weedlivero-menu-pdf');
+      if (input) input.value = '';
 
-      /*
-       * Reset del campo file.
-       */
-      const input =
-        document.getElementById(
-          'weedlivero-menu-pdf'
-        );
-
-      if (input) {
-        input.value = '';
-      }
-
-      setMessage(
-        '✅ Nuovo menu PDF pubblicato. Modalità manuale attiva.'
-      );
+      setMessage('✅ Nuovo menu PDF pubblicato. Modalità manuale attiva.');
     } catch (error) {
-      console.error(
-        'Errore upload PDF:',
-        error
-      );
-
-      setMessage(
-        `❌ ${
-          error instanceof Error
-            ? error.message
-            : 'Errore caricamento PDF'
-        }`
-      );
+      console.error('Errore upload PDF:', error);
+      setMessage(`❌ ${error instanceof Error ? error.message : 'Errore caricamento PDF'}`);
     } finally {
       setUploading(false);
     }
