@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import { verifyAdminSession } from '@/lib/admin-session';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -29,6 +30,10 @@ function noStoreHeaders() {
 
 export async function GET() {
   try {
+    if (!(await verifyAdminSession())) {
+      return Response.json({ error: 'Accesso amministratore richiesto.' }, { status: 401, headers: noStoreHeaders() });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     if (!supabaseAdmin) {
@@ -39,7 +44,7 @@ export async function GET() {
     }
 
     /*
-     * Non utilizziamo select('*') perché non dobbiamo mai inviare
+     * Non utilizziamo select('*') perchÃ© non dobbiamo mai inviare
      * admin_password_hash al browser.
      */
     const { data, error } = await supabaseAdmin
@@ -105,6 +110,14 @@ updated_at
 
 export async function PATCH(request) {
   try {
+    const origin = request.headers.get('origin');
+    if (!origin || origin !== new URL(request.url).origin) {
+      return Response.json({ error: 'Origine richiesta non autorizzata.' }, { status: 403, headers: noStoreHeaders() });
+    }
+    if (!(await verifyAdminSession())) {
+      return Response.json({ error: 'Accesso amministratore richiesto.' }, { status: 401, headers: noStoreHeaders() });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     if (!supabaseAdmin) {
@@ -137,7 +150,7 @@ export async function PATCH(request) {
         : '';
 
     /*
-     * Manteniamo tutte le impostazioni già presenti.
+     * Manteniamo tutte le impostazioni giÃ  presenti.
      */
     const updates = {
       catalog_name: body.catalog_name ?? '',
@@ -202,7 +215,7 @@ if (typeof body.menu_pdf_name === 'string') {
         return Response.json(
           {
             error:
-              'Il codice di accesso al catalogo è troppo lungo.',
+              'Il codice di accesso al catalogo Ã¨ troppo lungo.',
           },
           { status: 400 }
         );
@@ -213,7 +226,7 @@ if (typeof body.menu_pdf_name === 'string') {
 
     /*
      * Cambio password amministratore.
-     * Viene eseguito solo se è stata inserita una nuova password.
+     * Viene eseguito solo se Ã¨ stata inserita una nuova password.
      */
     if (newAdminPassword) {
       if (!currentAdminPassword) {
@@ -239,7 +252,7 @@ if (typeof body.menu_pdf_name === 'string') {
       if (newAdminPassword.length > 100) {
         return Response.json(
           {
-            error: 'La nuova password è troppo lunga.',
+            error: 'La nuova password Ã¨ troppo lunga.',
           },
           { status: 400 }
         );
@@ -306,7 +319,7 @@ if (typeof body.menu_pdf_name === 'string') {
         return Response.json(
           {
             error:
-              'La password amministratore attuale non è corretta.',
+              'La password amministratore attuale non Ã¨ corretta.',
           },
           { status: 401 }
         );

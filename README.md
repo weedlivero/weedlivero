@@ -19,7 +19,7 @@ Copia `.env.example` in `.env.local` e compila:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_TELEGRAM_USERNAME=weedlivero
-NEXT_PUBLIC_ACCESS_CODE=WEED2026
+# Il codice di accesso al catalogo viene gestito sul server tramite Supabase.
 ```
 
 Su Vercel inserisci le stesse variabili in Settings > Environment Variables.
