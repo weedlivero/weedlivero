@@ -5,22 +5,22 @@ import { useEffect, useState } from 'react';
 function getCategoryEmoji(category) {
   switch (category) {
     case 'weed':
-      return '🌿';
+      return '­ƒî┐';
 
     case 'hash':
-      return '🟫';
+      return '­ƒƒ½';
 
     case 'concentrate':
-      return '💧';
+      return '­ƒÆº';
 
     case 'edibles':
-      return '🍬';
+      return '­ƒì¼';
 
     case 'vapes':
-      return '💨';
+      return '­ƒÆ¿';
 
     default:
-      return '📦';
+      return '­ƒôª';
   }
 }
 
@@ -40,7 +40,7 @@ function formatPrice(value) {
   const number = Number(value);
 
   if (!Number.isFinite(number)) {
-    return '0,00 €';
+    return '0,00 Ôé¼';
   }
 
   return new Intl.NumberFormat('it-IT', {
@@ -100,7 +100,7 @@ function getAvailableSizes(product) {
   return [
     {
       key: 'unit',
-      label: 'Unità',
+      label: 'Unit├á',
       price: product.price_unit,
     },
     {
@@ -225,7 +225,7 @@ function buildMessage(
 
       selections.forEach((selection) => {
         lines.push(
-          `${selection.label} × ${selection.quantity} = ${formatPrice(
+          `${selection.label} ├ù ${selection.quantity} = ${formatPrice(
             selection.subtotal
           )}`
         );
@@ -240,7 +240,7 @@ function buildMessage(
 
       if (cleanCatalogUrl) {
         lines.push('');
-        lines.push('🔗 Scheda prodotto');
+        lines.push('­ƒöù Scheda prodotto');
         lines.push(
           `${cleanCatalogUrl}/product/${encodeURIComponent(
             product.id
@@ -257,11 +257,11 @@ function buildMessage(
   
 
   return [
-    `🌿 ${catalogName || 'Weedlivero'}`,
+    `­ƒî┐ ${catalogName || 'Weedlivero'}`,
     '',
     `Richiesta: ${requestId}`,
     '',
-    'Ciao 👋',
+    'Ciao ­ƒæï',
     '',
     selectedProducts.length === 1
       ? 'Vorrei ordinare il seguente prodotto:'
@@ -270,15 +270,15 @@ function buildMessage(
     `Prodotti diversi: ${selectedProducts.length}`,
   
     '',
-    '────────────────────────',
+    'ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ',
     '',
     productLines.join(
-      '\n\n────────────────────────\n\n'
+      '\n\nÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ\n\n'
     ),
     '',
-    '────────────────────────',
+    'ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ',
     '',
-    `💰 TOTALE ORDINE: ${formatPrice(
+    `­ƒÆ░ TOTALE ORDINE: ${formatPrice(
       orderTotal
     )}`,
     '',
@@ -306,7 +306,7 @@ export default function RequestContactButtons({
         setLoading(true);
 
         const response = await fetch(
-          `/api/settings?t=${Date.now()}`,
+          `/api/public-settings?t=${Date.now()}`,
           {
             cache: 'no-store',
           }
@@ -413,7 +413,7 @@ export default function RequestContactButtons({
       );
 
       alert(
-        'Non è stato possibile copiare automaticamente il messaggio.'
+        'Non ├¿ stato possibile copiare automaticamente il messaggio.'
       );
     }
 
@@ -460,7 +460,7 @@ export default function RequestContactButtons({
           onClick={openTelegram}
           className="w-full rounded-2xl bg-sky-500 p-4 font-black text-white transition active:scale-[0.98]"
         >
-          ✈️ Invia con Telegram
+          Ô£ê´©Å Invia con Telegram
         </button>
       ) : null}
 
@@ -471,12 +471,12 @@ export default function RequestContactButtons({
             onClick={openSignal}
             className="w-full rounded-2xl bg-blue-600 p-4 font-black text-white transition active:scale-[0.98]"
           >
-            🔵 Invia con Signal
+            ­ƒöÁ Invia con Signal
           </button>
 
           {showSignalToast ? (
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
-              ✅ Messaggio copiato negli appunti.
+              Ô£à Messaggio copiato negli appunti.
               <br />
               Apri Signal e premi{' '}
               <strong>Incolla</strong>.
