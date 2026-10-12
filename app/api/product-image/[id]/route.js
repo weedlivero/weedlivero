@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 function getSupabaseAdmin() {
   const supabaseUrl =
