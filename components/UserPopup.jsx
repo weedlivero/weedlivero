@@ -27,7 +27,7 @@ export default function UserPopup() {
           return;
         }
 
-        const response = await fetch(`/api/settings?t=${Date.now()}`, {
+        const response = await fetch(`/api/public-settings?t=${Date.now()}`, {
           cache: 'no-store',
         });
 
