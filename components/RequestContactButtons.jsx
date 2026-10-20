@@ -2,7 +2,7 @@
 
 
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 
 
@@ -574,6 +574,54 @@ function buildMessage(
 
 
 
+// Converte esclusivamente la risposta verificata dall'API nel formato del messaggio esistente.
+const VERIFIED_PRICE_FIELDS = Object.freeze({
+  unit: 'price_unit', '1g': 'price_1g', '3g': 'price_3g',
+  '5g': 'price_5g', '10g': 'price_10g', '20g': 'price_20g',
+  '50g': 'price_50g', '100g': 'price_100g',
+});
+
+function verifiedMessageProducts(payload) {
+  if (payload?.success !== true || payload.currency !== 'EUR' ||
+      !Array.isArray(payload.products) || payload.products.length === 0 ||
+      !Number.isFinite(payload.total) || payload.total <= 0) {
+    throw new Error('Risposta di verifica ordine non valida.');
+  }
+  let computedTotal = 0;
+  const result = payload.products.map((product) => {
+    if (!product || typeof product.id !== 'string' || typeof product.name !== 'string' ||
+        !Array.isArray(product.selections) || !product.selections.length) {
+      throw new Error('Prodotto verificato non valido.');
+    }
+    const selections = {};
+    const prices = {};
+    let subtotal = 0;
+    for (const entry of product.selections) {
+      const field = VERIFIED_PRICE_FIELDS[entry?.size];
+      if (!field || Object.prototype.hasOwnProperty.call(selections, entry.size) ||
+          !Number.isSafeInteger(entry.quantity) || entry.quantity < 1 ||
+          !Number.isFinite(entry.unitPrice) || entry.unitPrice <= 0 ||
+          !Number.isFinite(entry.subtotal) ||
+          Math.abs(entry.subtotal - entry.unitPrice * entry.quantity) > 0.001) {
+        throw new Error('Quantità o prezzo verificato non valido.');
+      }
+      selections[entry.size] = entry.quantity;
+      prices[field] = entry.unitPrice;
+      subtotal += entry.subtotal;
+    }
+    if (!Number.isFinite(product.subtotal) || Math.abs(subtotal - product.subtotal) > 0.001) {
+      throw new Error('Subtotale verificato non valido.');
+    }
+    computedTotal += subtotal;
+    return { id: product.id, name: product.name, category: product.category,
+      ...prices, selections };
+  });
+  if (Math.abs(computedTotal - payload.total) > 0.001) {
+    throw new Error('Totale verificato non valido.');
+  }
+  return result;
+}
+
 export default function RequestContactButtons({
 
   products,
@@ -601,6 +649,11 @@ export default function RequestContactButtons({
   ] = useState(false);
 
 
+
+  const orderInFlight = useRef(false);
+  const [verifyingOrder, setVerifyingOrder] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [manualSignalMessage, setManualSignalMessage] = useState('');
 
   useEffect(() => {
 
@@ -690,17 +743,48 @@ export default function RequestContactButtons({
 
 
 
-  const message = buildMessage(
+  async function prepareVerifiedMessage() {
+    const requestProducts = (products || []).map((product) => ({
+      id: product.id,
+      selections: Object.fromEntries(
+        Object.entries(product.selections || {}).filter(([, quantity]) => Number(quantity) > 0)
+      ),
+    })).filter((product) => Object.keys(product.selections).length > 0);
 
-    products,
+    const response = await fetch('/api/customer/prepare-order', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products: requestProducts }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Per ordinare devi accedere con un account approvato.');
+      }
+      throw new Error(payload.error || 'Verifica ordine non riuscita.');
+    }
+    const checkedProducts = verifiedMessageProducts(payload);
+    return buildMessage(checkedProducts, settings.catalog_name, settings.catalog_url);
+  }
 
-    settings.catalog_name,
-
-    settings.catalog_url
-
-  );
-
-
+  async function runVerifiedOrder(action) {
+    if (orderInFlight.current) return;
+    orderInFlight.current = true;
+    setVerifyingOrder(true);
+    setOrderError('');
+    setManualSignalMessage('');
+    try {
+      const checkedMessage = await prepareVerifiedMessage();
+      await action(checkedMessage);
+    } catch (error) {
+      setOrderError(error?.message || 'Impossibile preparare l’ordine.');
+    } finally {
+      orderInFlight.current = false;
+      setVerifyingOrder(false);
+    }
+  }
 
   const telegramUsername =
 
@@ -745,144 +829,42 @@ export default function RequestContactButtons({
 
 
   function openTelegram() {
-
-    if (!telegramAvailable) {
-
-      return;
-
-    }
-
-
-
-    const telegramUrl =
-
-      `https://t.me/${encodeURIComponent(
-
-        telegramUsername
-
-      )}` +
-
-      `?text=${encodeURIComponent(
-
-        message
-
-      )}`;
-
-
-
-    window.open(
-
-      telegramUrl,
-
-      '_blank',
-
-      'noopener,noreferrer'
-
-    );
-
+    if (!telegramAvailable || orderInFlight.current) return;
+    void runVerifiedOrder(async (checkedMessage) => {
+      const telegramUrl = `https://t.me/${encodeURIComponent(telegramUsername)}` +
+        `?text=${encodeURIComponent(checkedMessage)}`;
+      // Dopo una chiamata asincrona i popup possono essere bloccati: navigazione diretta.
+      window.location.assign(telegramUrl);
+    });
   }
 
-
-
-  async function openSignal() {
-
-    if (!signalAvailable) {
-
-      return;
-
-    }
-
-
-
-    try {
-
-      await navigator.clipboard.writeText(
-
-        message
-
-      );
-
-
-
-      setShowSignalToast(true);
-
-
-
-      window.setTimeout(() => {
-
-        setShowSignalToast(false);
-
-      }, 3000);
-
-    } catch (error) {
-
-      console.error(
-
-        'Errore copia messaggio:',
-
-        error
-
-      );
-
-
-
-      alert(
-
-        'Non è stato possibile copiare automaticamente il messaggio.'
-
-      );
-
-    }
-
-
-
-    const customSignalUrl =
-
-      settings.signal_url?.trim();
-
-
-
-    const isMobile =
-
-      /Android|iPhone|iPad|iPod/i.test(
-
-        navigator.userAgent
-
-      );
-
-
-
-   const signalUrl = customSignalUrl
-
-  ? customSignalUrl
-
-  : isMobile
-
-    ? `https://signal.me/#p/${encodeURIComponent(signalPhone)}`
-
-    : `sgnl://signal.me/#p/${encodeURIComponent(signalPhone)}`;
-
-        if (isMobile || customSignalUrl) {
-
-      window.open(
-
-        signalUrl,
-
-        '_blank',
-
-        'noopener,noreferrer'
-
-      );
-
-    } else {
-
-      window.location.href = signalUrl;
-
-    }
-
+  function openSignal() {
+    if (!signalAvailable || orderInFlight.current) return;
+    void runVerifiedOrder(async (checkedMessage) => {
+      try {
+        await navigator.clipboard.writeText(checkedMessage);
+        setShowSignalToast(true);
+        window.setTimeout(() => setShowSignalToast(false), 3000);
+      } catch (error) {
+        // Dopo la richiesta asincrona alcuni browser non consentono la clipboard.
+        // Mostra il testo verificato, senza aprire Signal con un messaggio non copiato.
+        setManualSignalMessage(checkedMessage);
+        throw new Error('Copia automatica non disponibile. Copia il messaggio verificato qui sotto.');
+      }
+      const customSignalUrl = settings.signal_url?.trim();
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const signalUrl = customSignalUrl
+        ? customSignalUrl
+        : isMobile
+          ? `https://signal.me/#p/${encodeURIComponent(signalPhone)}`
+          : `sgnl://signal.me/#p/${encodeURIComponent(signalPhone)}`;
+      if (isMobile || customSignalUrl) {
+        window.open(signalUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.href = signalUrl;
+      }
+    });
   }
-
-
 
   if (
 
@@ -909,6 +891,17 @@ export default function RequestContactButtons({
   return (
 
     <section className="mt-8 space-y-3">
+      {verifyingOrder ? (
+        <p role="status" className="text-center text-sm text-gray-600">Verifica ordine in corso...</p>
+      ) : null}
+      {orderError ? (
+        <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 text-center text-sm font-bold text-red-700">{orderError}</p>
+      ) : null}
+      {manualSignalMessage ? (
+        <textarea aria-label="Messaggio verificato da copiare" readOnly value={manualSignalMessage}
+          rows={8} className="w-full rounded-xl border border-gray-300 p-3 text-sm" />
+      ) : null}
+
 
       {telegramAvailable ? (
 
@@ -917,6 +910,7 @@ export default function RequestContactButtons({
           type="button"
 
           onClick={openTelegram}
+          disabled={verifyingOrder}
 
           className="w-full rounded-2xl bg-sky-500 p-4 font-black text-white transition active:scale-[0.98]"
 
@@ -939,6 +933,7 @@ export default function RequestContactButtons({
             type="button"
 
             onClick={openSignal}
+            disabled={verifyingOrder}
 
             className="w-full rounded-2xl bg-blue-600 p-4 font-black text-white transition active:scale-[0.98]"
 
