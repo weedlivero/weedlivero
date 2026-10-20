@@ -8,6 +8,7 @@ const defaultSettings = {
   catalog_url: '',
   welcome_message: '',
   catalog_access_code: '',
+  guest_access_enabled: false,
 
   current_admin_password: '',
   new_admin_password: '',
@@ -75,6 +76,8 @@ export default function AdminSettingsPage() {
       setSettings({
         ...defaultSettings,
         ...(result.settings || {}),
+        guest_access_enabled:
+          result.settings?.guest_access_enabled === true,
         telegram_enabled:
           result.settings?.telegram_enabled === true,
         signal_enabled:
@@ -228,6 +231,33 @@ export default function AdminSettingsPage() {
           </div>
         </section>
 
+        <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">
+              Accesso ospiti
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Consenti agli ospiti di consultare il catalogo senza effettuare ordini.
+            </p>
+          </div>
+          <label className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
+            <span className="font-bold text-gray-800">
+              Consenti accesso ospiti
+            </span>
+            <input
+              type="checkbox"
+              checked={settings.guest_access_enabled === true}
+              onChange={(event) =>
+                update('guest_access_enabled', event.target.checked)
+              }
+              className="h-5 w-5"
+            />
+          </label>
+          <p className="text-xs text-amber-700">
+            Impostazione in preparazione: l'accesso ospiti sara attivato
+            solo quando saranno pronti login utenti e protezione ordini.
+          </p>
+        </section>
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
             <h2 className="text-2xl font-black text-gray-900">

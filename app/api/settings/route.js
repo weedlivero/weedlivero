@@ -55,6 +55,7 @@ export async function GET() {
         catalog_url,
         welcome_message,
         catalog_access_code,
+        guest_access_enabled,
         telegram_enabled,
         telegram_username,
         telegram_phone,
@@ -156,6 +157,7 @@ export async function PATCH(request) {
       catalog_name: body.catalog_name ?? '',
       catalog_url: body.catalog_url ?? '',
       welcome_message: body.welcome_message ?? '',
+      guest_access_enabled: body.guest_access_enabled === true,
 
       telegram_enabled: body.telegram_enabled === true,
       telegram_username: body.telegram_username ?? '',
@@ -341,6 +343,7 @@ if (typeof body.menu_pdf_name === 'string') {
         catalog_url,
         welcome_message,
         catalog_access_code,
+        guest_access_enabled,
         telegram_enabled,
         telegram_username,
         telegram_phone,

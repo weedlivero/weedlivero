@@ -28,6 +28,7 @@ export async function GET() {
       .select(`
         catalog_name,
         catalog_url,
+        guest_access_enabled,
         telegram_enabled,
         telegram_username,
         signal_enabled,
