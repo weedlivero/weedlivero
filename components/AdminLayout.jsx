@@ -21,6 +21,11 @@ const adminLinks = [
     icon: '📂',
   },
   {
+    href: '/admin/users',
+    label: 'Gestione utenti',
+    icon: '\u{1F465}',
+  },
+  {
     href: '/admin/settings',
     label: 'Impostazioni',
     icon: '⚙️',
@@ -71,7 +76,7 @@ export default function AdminLayout({ title, children }) {
       {/* MENU MOBILE */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-100 bg-white/95 px-3 py-2 shadow-lg backdrop-blur lg:hidden">
 
-        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-6 gap-1">
 
           {adminLinks.map((item) => (
             <Link

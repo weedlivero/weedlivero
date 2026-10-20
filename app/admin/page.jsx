@@ -1,3 +1,4 @@
+import AdminUsersDashboardCard from '@/components/AdminUsersDashboardCard';
 import Link from 'next/link';
 import AdminLayout from '@/components/AdminLayout';
 import AdminProductsList from '@/components/AdminProductsList';
@@ -112,6 +113,10 @@ export default async function AdminPage() {
             {inactiveCategories.length}
           </p>
         </Link>
+      </section>
+
+      <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <AdminUsersDashboardCard />
       </section>
 
       {/* MENU PDF */}
