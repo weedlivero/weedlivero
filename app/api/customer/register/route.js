@@ -17,7 +17,8 @@ function getAdminClient() {
 }
 
 export async function POST(request) {
-  // Closed until the Telegram verification flow and durable rate limits are ready.
+  // Registration remains disabled until durable rate limiting and the
+  // administrator approval workflow have been completed and tested.
   if (process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true') {
     return response({ error: 'Registrazione non ancora disponibile.' }, 503);
   }
@@ -53,6 +54,7 @@ export async function POST(request) {
     const { error } = await supabase.from('customer_accounts').insert({
       username,
       password_hash: passwordHash,
+      approval_status: 'pending',
       is_active: false,
       must_change_password: false,
     });
@@ -65,7 +67,10 @@ export async function POST(request) {
       return response({ error: 'Impossibile completare la registrazione.' }, 500);
     }
 
-    return response({ success: true, message: 'Account creato in attesa di verifica Telegram.' }, 201);
+    return response({
+      success: true,
+      message: 'Registrazione ricevuta. Il tuo account e in attesa di approvazione.',
+    }, 201);
   } catch (error) {
     if (error instanceof SyntaxError) return response({ error: 'JSON non valido.' }, 400);
     console.error('Errore registrazione:', error);
