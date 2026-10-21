@@ -1329,25 +1329,26 @@ export default function EditProductPage() {
 
 
 
-    const {
+    const productUpdateResponse = await fetch(
+      `/api/products/${encodeURIComponent(params.id)}`,
+      {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mediaOnly: true,
+          ...mediaUpdate,
+        }),
+      }
+    );
 
-      error: productUpdateError,
+    const productUpdateResult = await productUpdateResponse.json();
 
-    } = await supabase
-
-      .from('products')
-
-      .update(mediaUpdate)
-
-      .eq('id', params.id);
-
-
-
-    if (productUpdateError) {
-
-      throw productUpdateError;
-
-    }
+    if (!productUpdateResponse.ok) {
+      throw new Error(
+        productUpdateResult.error || 'Errore aggiornamento prodotto'
+      );
+    }
 
 
 

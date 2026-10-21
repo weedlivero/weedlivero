@@ -84,6 +84,43 @@ export async function PATCH(request, { params }) {
     let body;
     try { body = await request.json(); } catch { return Response.json({ error: 'JSON non valido' }, { status: 400 }); }
     if (badJson(body)) return Response.json({ error: 'Dati prodotto non validi' }, { status: 400 });
+    if (body.mediaOnly === true) {
+      const allowedFields = ['image_path', 'image_url', 'video_path', 'video_url'];
+      const mediaUpdates = {};
+
+      for (const field of allowedFields) {
+        if (Object.prototype.hasOwnProperty.call(body, field)) {
+          if (typeof body[field] !== 'string') {
+            return Response.json(
+              { error: 'Campo multimediale non valido' },
+              { status: 400 }
+            );
+          }
+          mediaUpdates[field] = body[field];
+        }
+      }
+
+      if (Object.keys(mediaUpdates).length === 0) {
+        return Response.json(
+          { error: 'Nessun campo multimediale da aggiornare' },
+          { status: 400 }
+        );
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('products')
+        .update(mediaUpdates)
+        .eq('id', productId)
+        .select()
+        .single();
+
+      if (error) {
+        return Response.json({ error: error.message }, { status: 500 });
+      }
+
+      return Response.json({ success: true, product: data });
+    }
+
     const updates = {
       name: String(body.name ?? '').trim(),
       brand: String(body.brand ?? '').trim(),
