@@ -1,3 +1,6 @@
+import { redirect } from 'next/navigation';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 import Link from 'next/link';
 import MenuActions from '@/components/MenuActions';
 
@@ -6,7 +9,14 @@ export const metadata = {
   description: 'Scarica il menu aggiornato di Weedlivero',
 };
 
-export default function MenuPage() {
+export default async function MenuPage() {
+  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+    const isAdmin = await verifyAdminSession();
+    if (!isAdmin) {
+      const access = await getCatalogAccess();
+      if (!access.allowed) redirect('/access');
+    }
+  }
   return (
     <main className="min-h-screen px-5 py-10">
       <div className="mx-auto max-w-xl">

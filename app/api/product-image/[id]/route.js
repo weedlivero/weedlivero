@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -24,6 +26,26 @@ export async function GET(
   request,
   { params }
 ) {
+  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+    try {
+      const isAdmin = await verifyAdminSession();
+      if (!isAdmin) {
+        const access = await getCatalogAccess();
+        if (!access.allowed) {
+          return new Response('Accesso al catalogo richiesto.', {
+            status: 401,
+            headers: { 'Cache-Control': 'no-store' },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Verifica accesso immagine fallita:', error);
+      return new Response('Verifica accesso non disponibile.', {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
+  }
   const supabaseAdmin =
     getSupabaseAdmin();
 

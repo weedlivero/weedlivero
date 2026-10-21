@@ -1,3 +1,6 @@
+import { redirect } from 'next/navigation';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 import RequestListBar from '@/components/RequestListBar';
 import AccessGate from '@/components/AccessGate';
 import Header from '@/components/Header';
@@ -82,6 +85,14 @@ function hasPriceInformation(product) {
 }
 
 export default async function ProductPage({ params }) {
+  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+    const isAdmin = await verifyAdminSession();
+    if (!isAdmin) {
+      const access = await getCatalogAccess();
+      if (!access.allowed) redirect('/access');
+    }
+  }
+
   const product = await getProduct(params.id);
 
   if (!product) {
@@ -126,7 +137,7 @@ export default async function ProductPage({ params }) {
   ].filter((item) => formatPrice(item.value));
 
   return (
-    <AccessGate>
+    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
       <Header title="Prodotto" />
 
       <main className="mx-auto max-w-3xl px-5 pb-48 pt-6">

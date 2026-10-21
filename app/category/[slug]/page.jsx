@@ -1,3 +1,6 @@
+import { redirect } from 'next/navigation';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AccessGate from '@/components/AccessGate';
@@ -10,6 +13,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function CategoryPage({ params }) {
+  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+    const isAdmin = await verifyAdminSession();
+    if (!isAdmin) {
+      const access = await getCatalogAccess();
+      if (!access.allowed) redirect('/access');
+    }
+  }
+
   const category = await getCategoryBySlug(params.slug);
 
   if (!category || category.active !== true) {
@@ -20,7 +31,7 @@ export default async function CategoryPage({ params }) {
   const featuredProducts = products.filter((product) => product.featured);
 
   return (
-    <AccessGate>
+    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
       <Header title={category.title} />
 
       <main className="mx-auto max-w-5xl px-5 pb-28 pt-6">

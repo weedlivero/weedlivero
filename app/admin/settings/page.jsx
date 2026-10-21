@@ -34,6 +34,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPopupPreview, setShowPopupPreview] = useState(false);
+  const [savingGuestAccess, setSavingGuestAccess] = useState(false);
 
   const [settings, setSettings] = useState(defaultSettings);
 
@@ -98,6 +99,27 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function saveGuestAccess(enabled) {
+    if (savingGuestAccess || saving || loading) return;
+    const previous = settings.guest_access_enabled === true;
+    setSettings((current) => ({ ...current, guest_access_enabled: enabled }));
+    setSavingGuestAccess(true);
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_access_enabled: enabled }),
+      });
+      const result = await readJsonResponse(response);
+      if (!response.ok) throw new Error(result.error || 'Impossibile aggiornare accesso ospiti');
+      setSettings((current) => ({ ...current, guest_access_enabled: result.guest_access_enabled === true }));
+    } catch (error) {
+      setSettings((current) => ({ ...current, guest_access_enabled: previous }));
+      alert(error instanceof Error ? error.message : 'Errore aggiornamento accesso ospiti');
+    } finally {
+      setSavingGuestAccess(false);
+    }
+  }
   async function saveSettings() {
     try {
       setSaving(true);
@@ -247,15 +269,13 @@ export default function AdminSettingsPage() {
             <input
               type="checkbox"
               checked={settings.guest_access_enabled === true}
-              onChange={(event) =>
-                update('guest_access_enabled', event.target.checked)
-              }
-              className="h-5 w-5"
+              onChange={(event) => saveGuestAccess(event.target.checked)}
+              disabled={savingGuestAccess || saving || loading}
+              className="h-5 w-5 disabled:opacity-50"
             />
           </label>
-          <p className="text-xs text-amber-700">
-            Impostazione in preparazione: l'accesso ospiti sara attivato
-            solo quando saranno pronti login utenti e protezione ordini.
+          <p className="text-xs text-gray-600">
+            {savingGuestAccess ? 'Salvataggio accesso ospiti...' : 'Modifica salvata immediatamente. Gli ospiti possono consultare il catalogo, ma non effettuare ordini.'}
           </p>
         </section>
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">

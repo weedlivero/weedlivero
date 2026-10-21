@@ -41,6 +41,27 @@ export default function AdminUsersPage() {
     } catch (e) { setError(e.message); }
     finally { setBusy(null); }
   }
+  async function removeUser(user) {
+    const typed = window.prompt(`ELIMINAZIONE DEFINITIVA. Per eliminare ${user.username}, digita esattamente il suo username:`);
+    if (typed === null) return;
+    if (typed !== user.username) {
+      setError('Username di conferma non corrispondente. Nessun utente eliminato.');
+      return;
+    }
+    if (!window.confirm(`Confermi l'eliminazione DEFINITIVA di ${user.username}? L'operazione non puo essere annullata.`)) return;
+    setBusy(user.id); setError('');
+    try {
+      const r = await fetch('/api/admin/customers', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user.id, username: user.username }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Eliminazione non riuscita');
+      await load();
+    } catch (e) { setError(e.message); }
+    finally { setBusy(null); }
+  }
   const pending = users.filter(u => u.approval_status === 'pending').length;
   return <AdminLayout title="Gestione utenti">
     <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
@@ -63,7 +84,7 @@ export default function AdminUsersPage() {
         </div><div className="flex flex-wrap gap-2">{(actions[u.approval_status] || []).filter(a =>
           u.approval_status !== 'approved' || (u.is_active ? a.key === 'suspend' : a.key === 'reactivate')
         ).map(a => <button key={a.key} disabled={!!busy} onClick={() => apply(u, a.key)}
-          className="rounded-xl bg-green-50 px-4 py-2 text-sm font-bold text-green-800 disabled:opacity-50">{a.label}</button>)}</div></div>
+          className="rounded-xl bg-green-50 px-4 py-2 text-sm font-bold text-green-800 disabled:opacity-50">{a.label}</button>)}<button type="button" disabled={!!busy} onClick={() => removeUser(u)} className="rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 disabled:opacity-50">Elimina</button></div></div>
       </div>)}</div>}
     <p className="mt-6 text-xs text-gray-500">Le password non sono visibili. Il ripristino password sarà aggiunto in un passaggio successivo.</p>
   </AdminLayout>;

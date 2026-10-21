@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -39,11 +40,32 @@ function badJson(body) {
 
 export async function GET(request, { params }) {
   try {
+    const protectionEnabled = process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true';
+    let isAdmin = false;
+
+    if (protectionEnabled) {
+      isAdmin = await verifyAdminSession();
+      if (!isAdmin) {
+        const access = await getCatalogAccess();
+        if (!access.allowed) {
+          return Response.json(
+            { error: 'Accesso al catalogo richiesto.' },
+            { status: 401, headers: { 'Cache-Control': 'no-store' } }
+          );
+        }
+      }
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) return Response.json({ error: 'Configurazione Supabase mancante' }, { status: 500 });
     const productId = params.id;
     if (!productId) return Response.json({ error: 'Codice prodotto mancante' }, { status: 400 });
-    const { data, error } = await supabaseAdmin.from('products').select('*').eq('id', productId).single();
+    const catalogFields = 'id,name,brand,category,description,notes,image_url,video_url,thc,cbd,quality_level,price_unit,price_1g,price_3g,price_5g,price_10g,price_20g,price_50g,price_100g,price_promo,menu_order,active,featured,sold_out';
+    let query = supabaseAdmin.from('products').select(protectionEnabled && !isAdmin ? catalogFields : '*').eq('id', productId);
+    if (protectionEnabled && !isAdmin) {
+      query = query.eq('active', true);
+    }
+    const { data, error } = await query.single();
     if (error) return Response.json({ error: error.message }, { status: error.code === 'PGRST116' ? 404 : 500 });
     return Response.json({ product: data }, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } });
   } catch {

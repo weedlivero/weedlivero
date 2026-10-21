@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 const ACCESS_STORAGE_KEY = 'weedlivero_access';
 
-export default function AccessGate({ children }) {
+export default function AccessGate({ children, bypass = false }) {
   const [code, setCode] = useState('');
   const [allowed, setAllowed] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -75,6 +75,8 @@ export default function AccessGate({ children }) {
 
     setLoading(false);
   }
+
+  if (bypass) return children;
 
   if (!checked) {
     return (

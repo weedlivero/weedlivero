@@ -1,3 +1,6 @@
+import { redirect } from 'next/navigation';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 import Link from 'next/link';
 import UserPopup from '@/components/UserPopup';
 import AccessGate from '@/components/AccessGate';
@@ -12,6 +15,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
+  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+    const isAdmin = await verifyAdminSession();
+    if (!isAdmin) {
+      const access = await getCatalogAccess();
+      if (!access.allowed) redirect('/access');
+    }
+  }
+
   const categories = await getActiveCategories();
   const products = await getProducts();
 
@@ -22,7 +33,7 @@ export default async function HomePage() {
   const featuredProduct = featuredProducts[0];
 
   return (
-    <AccessGate>
+    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
       <UserPopup />
 
       <main className="min-h-screen pb-20">

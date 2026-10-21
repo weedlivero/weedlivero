@@ -78,3 +78,44 @@ export async function PATCH(request) {
     return reply({ error: 'Impossibile aggiornare utente' }, 500);
   }
 }
+
+// Eliminazione definitiva di un singolo account cliente.
+// Il database gestisce con ON DELETE CASCADE le sessioni e le verifiche collegate.
+export async function DELETE(request) {
+  if (!(await verifyAdminSession())) return reply({ error: 'Non autorizzato' }, 401);
+  const origin = request.headers.get('origin');
+  if (!origin || origin !== new URL(request.url).origin) {
+    return reply({ error: 'Origine non autorizzata' }, 403);
+  }
+  if (!(request.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) {
+    return reply({ error: 'Formato non valido' }, 415);
+  }
+  try {
+    const raw = await request.text();
+    if (raw.length > 2048) return reply({ error: 'Richiesta troppo grande' }, 413);
+    const body = JSON.parse(raw);
+    const id = body?.id;
+    const username = body?.username;
+    if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return reply({ error: 'ID non valido' }, 400);
+    }
+    if (typeof username !== 'string' || !/^[a-z0-9_]{3,32}$/.test(username)) {
+      return reply({ error: 'Username di conferma non valido' }, 400);
+    }
+    const client = db();
+    // Vincola la cancellazione a entrambi i campi per evitare di colpire un altro account.
+    const { data: deleted, error } = await client.from('customer_accounts')
+      .delete()
+      .eq('id', id)
+      .eq('username', username)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!deleted) return reply({ error: 'Utente non trovato o dati non corrispondenti' }, 404);
+    return reply({ success: true });
+  } catch (e) {
+    if (e instanceof SyntaxError) return reply({ error: 'JSON non valido' }, 400);
+    console.error('Gestione utenti DELETE:', e?.code || e?.message);
+    return reply({ error: 'Impossibile eliminare utente' }, 500);
+  }
+}

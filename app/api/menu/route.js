@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminSession } from '@/lib/admin-session';
+import { getCatalogAccess } from '@/lib/catalog-access';
 import { getProducts } from '@/lib/products';
 import { generateMenuPdf } from '@/lib/pdf/menu-generator';
 
@@ -46,6 +48,19 @@ function pdfHeaders(fileName) {
 
 export async function GET() {
   try {
+    // Verifica accesso prima di leggere le impostazioni o generare/scaricare il PDF.
+    if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
+      const isAdmin = await verifyAdminSession();
+      if (!isAdmin) {
+        const access = await getCatalogAccess();
+        if (!access.allowed) {
+          return Response.json(
+            { error: 'Accesso al catalogo richiesto.' },
+            { status: 401, headers: { 'Cache-Control': 'no-store' } }
+          );
+        }
+      }
+    }
     const supabaseAdmin =
       getSupabaseAdmin();
 

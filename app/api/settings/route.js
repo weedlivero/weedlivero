@@ -157,8 +157,6 @@ export async function PATCH(request) {
       catalog_name: body.catalog_name ?? '',
       catalog_url: body.catalog_url ?? '',
       welcome_message: body.welcome_message ?? '',
-      guest_access_enabled: body.guest_access_enabled === true,
-
       telegram_enabled: body.telegram_enabled === true,
       telegram_username: body.telegram_username ?? '',
       telegram_phone: body.telegram_phone ?? '',
@@ -397,5 +395,45 @@ updated_at
       },
       { status: 500 }
     );
+  }
+}
+// Aggiornamento indipendente della sola autorizzazione ospiti.
+export async function PUT(request) {
+  const headers = noStoreHeaders();
+  try {
+    const origin = request.headers.get('origin');
+    if (!origin || origin !== new URL(request.url).origin) {
+      return Response.json({ error: 'Origine richiesta non autorizzata.' }, { status: 403, headers });
+    }
+    if (!(await verifyAdminSession())) {
+      return Response.json({ error: 'Accesso amministratore richiesto.' }, { status: 401, headers });
+    }
+    if (!(request.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) {
+      return Response.json({ error: 'Formato richiesta non valido.' }, { status: 415, headers });
+    }
+    const raw = await request.text();
+    if (Buffer.byteLength(raw, 'utf8') > 1024) {
+      return Response.json({ error: 'Richiesta troppo grande.' }, { status: 413, headers });
+    }
+    let body;
+    try { body = JSON.parse(raw); } catch {
+      return Response.json({ error: 'JSON non valido.' }, { status: 400, headers });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body) ||
+        Object.keys(body).length !== 1 || typeof body.guest_access_enabled !== 'boolean') {
+      return Response.json({ error: 'Impostazione ospiti non valida.' }, { status: 400, headers });
+    }
+    const db = getSupabaseAdmin();
+    if (!db) return Response.json({ error: 'Configurazione Supabase mancante.' }, { status: 500, headers });
+    const { data, error } = await db.from('settings')
+      .update({ guest_access_enabled: body.guest_access_enabled })
+      .eq('id', 1)
+      .select('guest_access_enabled')
+      .single();
+    if (error) throw error;
+    return Response.json({ success: true, guest_access_enabled: data.guest_access_enabled === true }, { headers });
+  } catch (error) {
+    console.error('Salvataggio accesso ospiti:', error?.code || error?.message);
+    return Response.json({ error: 'Impossibile aggiornare accesso ospiti.' }, { status: 500, headers });
   }
 }

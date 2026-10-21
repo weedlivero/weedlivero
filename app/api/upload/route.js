@@ -1,6 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminSession } from '@/lib/admin-session';
 
 export async function POST(request) {
+  if (!(await verifyAdminSession())) {
+      return Response.json(
+        { error: 'Accesso amministratore richiesto' },
+        { status: 401 }
+      );
+    }
+
+    const origin = request.headers.get('origin');
+    let authorizedOrigin = false;
+
+    try {
+      const target = new URL(request.url);
+      const source = new URL(origin || '');
+      authorizedOrigin =
+        source.protocol === target.protocol &&
+        source.host === target.host;
+    } catch {
+      authorizedOrigin = false;
+    }
+
+    if (!authorizedOrigin) {
+      return Response.json(
+        { error: 'Origine richiesta non autorizzata' },
+        { status: 403 }
+      );
+    }
+
+    if (!(request.headers.get('content-type') || '')
+      .toLowerCase().startsWith('application/json')) {
+      return Response.json(
+        { error: 'Formato richiesta non valido' },
+        { status: 415 }
+      );
+    }
   try {
     const { fileName, fileType, folder = 'images' } = await request.json();
 
