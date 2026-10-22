@@ -30,11 +30,11 @@ export default function CustomerAccessPage() {
         if (active && sessionResponse.ok) {
           const session = await sessionResponse.json();
           if (session?.authenticated === true && session?.mustChangePassword !== true) {
-            setNotice('Sessione cliente attiva. Il catalogo sarÃ  accessibile quando verrÃ  abilitato il nuovo sistema.');
+            setNotice('Hai già effettuato l’accesso. Puoi entrare nel catalogo.');
           }
         }
       } catch {
-        // Fail closed: guest entry remains hidden if settings cannot be checked.
+        // L'ingresso ospite resta nascosto se non è possibile verificare le impostazioni.
       }
     }
     load();
@@ -66,15 +66,31 @@ export default function CustomerAccessPage() {
       setPassword('');
       setConfirmPassword('');
       if (mode === 'register') {
-        setNotice(result?.message || 'Registrazione ricevuta. Attendi lâ€™approvazione.');
+        setNotice(result?.message || 'Registrazione ricevuta. Attendi l’approvazione.');
         setMode('login');
       } else {
         router.refresh();
         router.push('/');
       }
     } catch {
-      setError('Impossibile collegarsi al server. Riprova piÃ¹ tardi.');
+      setError('Impossibile collegarsi al server. Riprova più tardi.');
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enterAsGuest() {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/guest-entry', {
+        method: 'POST',
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Ingresso visitatore non riuscito');
+      window.location.assign('/');
+    } catch {
+      setError('Impossibile entrare come visitatore. Riprova.');
       setBusy(false);
     }
   }
@@ -92,8 +108,8 @@ export default function CustomerAccessPage() {
         </div>
         <div className="mx-auto mt-2 h-px w-20 bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
         <h1 className="mt-5 text-xl font-black text-gray-900">Accesso Weedlivero</h1>
-        <p className="mt-2 text-sm leading-relaxed text-gray-600">Accedi con il tuo account oppure richiedi la registrazione.</p>
-        <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃ  di accesso">
+        <p className="mt-2 text-sm leading-relaxed text-gray-600">Accedi con il tuo account, richiedi la registrazione oppure entra come visitatore.</p>
+        <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="Modalità di accesso">
           <button type="button" onClick={() => { setMode('login'); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'login' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Accedi</button>
           <button type="button" onClick={() => { setMode('register'); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
         </div>
@@ -106,7 +122,7 @@ export default function CustomerAccessPage() {
             <>
               <label className="block text-left text-sm font-semibold text-gray-700" htmlFor="customer-confirm">Conferma password</label>
               <input id="customer-confirm" type="password" className="wl-input w-full px-4 py-3" autoComplete="new-password" required minLength={12} maxLength={128} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Ripeti password" />
-              <p className="text-left text-xs text-gray-500">Minimo 12 caratteri. Lâ€™account richiede lâ€™approvazione dellâ€™amministratore.</p>
+              <p className="text-left text-xs text-gray-500">Minimo 12 caratteri. L’account richiede l’approvazione dell’amministratore.</p>
             </>
           ) : null}
           {error ? <p role="alert" className="text-sm font-semibold text-red-600">{error}</p> : null}
@@ -115,8 +131,8 @@ export default function CustomerAccessPage() {
         </form>
         {guestEnabled ? (
           <div className="mt-5 border-t border-emerald-100 pt-5">
-            <button type="button" onClick={() => router.push('/')} className="w-full rounded-xl border border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-800">Entra come ospite</button>
-            <p className="mt-2 text-xs text-gray-500">Lâ€™ingresso ospite sarÃ  operativo dopo lâ€™attivazione del nuovo sistema. Gli ospiti non possono inviare ordini.</p>
+            <button type="button" disabled={busy} onClick={enterAsGuest} className="w-full rounded-xl border border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-800 disabled:opacity-60">{busy ? 'Attendi...' : 'Entra come visitatore'}</button>
+            <p className="mt-2 text-xs text-gray-500">Puoi consultare il catalogo senza registrarti. I visitatori non possono inviare ordini.</p>
           </div>
         ) : null}
         <p className="mt-5 text-xs font-medium text-gray-400">Accesso riservato</p>

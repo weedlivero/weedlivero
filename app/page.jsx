@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/lib/admin-session';
 import { getCatalogAccess } from '@/lib/catalog-access';
 import Link from 'next/link';
@@ -15,11 +16,16 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
-  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
-    const isAdmin = await verifyAdminSession();
-    if (!isAdmin) {
-      const access = await getCatalogAccess();
-      if (!access.allowed) redirect('/access');
+  // La scelta ospite serve solo per la navigazione, non autorizza ordini.
+  // L'autorizzazione effettiva al catalogo resta gestita lato server.
+  const isAdmin = await verifyAdminSession();
+  if (!isAdmin) {
+    const access = await getCatalogAccess();
+    if (!access.allowed) redirect('/access');
+
+    if (access.role !== 'customer') {
+      const enteredAsGuest = cookies().get('weedlivero_guest_entry')?.value === '1';
+      if (!enteredAsGuest) redirect('/access');
     }
   }
 
