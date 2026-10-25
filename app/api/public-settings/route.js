@@ -17,6 +17,10 @@ export async function GET() {
     }
 
     const supabase = createClient(url, key, {
+      global: {
+        fetch: (input, init = {}) =>
+          fetch(input, { ...init, cache: 'no-store' }),
+      },
       auth: {
         persistSession: false,
         autoRefreshToken: false,
