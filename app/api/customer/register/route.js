@@ -65,9 +65,9 @@ export async function POST(request) {
       return noStore({ error: 'Verifica Telegram richiesta.' }, 400);
     }
 
-    if (password.length < 12 || password.length > 128) {
+    if (password.length < 8 || password.length > 128) {
       return noStore({
-        error: 'La password deve contenere da 12 a 128 caratteri.',
+        error: 'La password deve contenere da 8 a 128 caratteri.',
       }, 400);
     }
 

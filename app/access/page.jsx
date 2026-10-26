@@ -364,12 +364,12 @@ export default function CustomerAccessPage() {
             </>
           )}
           <label className="block text-left text-sm font-semibold text-gray-700" htmlFor="customer-password">Password</label>
-          <input id="customer-password" type="password" className="wl-input w-full px-4 py-3" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 12 : 1} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" />
+          <input id="customer-password" type="password" className="wl-input w-full px-4 py-3" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 8 : 1} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" />
           {mode === 'register' ? (
             <>
               <label className="block text-left text-sm font-semibold text-gray-700" htmlFor="customer-confirm">Conferma password</label>
-              <input id="customer-confirm" type="password" className="wl-input w-full px-4 py-3" autoComplete="new-password" required minLength={12} maxLength={128} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Ripeti password" />
-              <p className="text-left text-xs text-gray-500">Minimo 12 caratteri. La registrazione viene completata dopo la verifica Telegram.</p>
+              <input id="customer-confirm" type="password" className="wl-input w-full px-4 py-3" autoComplete="new-password" required minLength={8} maxLength={128} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Ripeti password" />
+              <p className="text-left text-xs text-gray-500">Minimo 8 caratteri. La registrazione viene completata dopo la verifica Telegram.</p>
             </>
           ) : null}
           {error ? <p role="alert" className="text-sm font-semibold text-red-600">{error}</p> : null}
