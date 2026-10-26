@@ -24,3 +24,16 @@ Thumbs.db
 
 # Vercel
 .vercel/
+# Credenziali tunnel Telegram di test
+/telegram-test-proxy/.tunnel-secret
+/telegram-test-proxy/.gateway-auth.json
+/telegram-test-proxy/.gateway-session-key
+
+.env.telegram-test.local
+.env.*.backup-*
+.env.*.backup
+.env.*.local
+*.bak-*
+*.backup-*
+backups/
+backup_guest_orders_*/

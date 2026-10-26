@@ -13,21 +13,53 @@ export default function AccessGate({ children, bypass = false }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    try {
-      const savedAccess =
-        window.localStorage.getItem(ACCESS_STORAGE_KEY);
+    let active = true;
 
-      setAllowed(savedAccess === 'ok');
-    } catch (storageError) {
-      console.warn(
-        'LocalStorage non disponibile nel browser corrente:',
-        storageError
-      );
+    async function checkAccess() {
+      let legacyAccess = false;
 
-      setAllowed(false);
-    } finally {
-      setChecked(true);
+      try {
+        legacyAccess =
+          window.localStorage.getItem(ACCESS_STORAGE_KEY) === 'ok';
+      } catch (error) {
+        console.warn('LocalStorage non disponibile:', error);
+      }
+
+      if (legacyAccess) {
+        if (active) {
+          setAllowed(true);
+          setChecked(true);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/customer/session', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+
+        const result = response.ok
+          ? await response.json()
+          : { authenticated: false };
+
+        if (active) {
+          setAllowed(result.authenticated === true);
+        }
+      } catch (error) {
+        console.warn('Verifica sessione cliente:', error);
+
+        if (active) setAllowed(false);
+      } finally {
+        if (active) setChecked(true);
+      }
     }
+
+    checkAccess();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function submit(event) {
