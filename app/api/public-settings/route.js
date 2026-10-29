@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +36,11 @@ export async function GET() {
         telegram_username,
         signal_enabled,
         signal_phone,
-        signal_url
+        signal_url,
+        popup_enabled,
+        popup_title,
+        popup_message,
+        popup_button_text
       `)
       .eq('id', 1)
       .single();
