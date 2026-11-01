@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/lib/admin-session';
 import { getCatalogAccess } from '@/lib/catalog-access';
 import Link from 'next/link';
@@ -23,10 +22,6 @@ export default async function HomePage() {
     const access = await getCatalogAccess();
     if (!access.allowed) redirect('/access');
 
-    if (access.role !== 'customer') {
-      const enteredAsGuest = cookies().get('weedlivero_guest_entry')?.value === '1';
-      if (!enteredAsGuest) redirect('/access');
-    }
   }
 
   const categories = await getActiveCategories();
