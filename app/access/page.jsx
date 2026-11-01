@@ -173,6 +173,8 @@ export default function CustomerAccessPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [guestEnabled, setGuestEnabled] = useState(false);
+  const [guestPassword, setGuestPassword] = useState('');
+  const [guestFormOpen, setGuestFormOpen] = useState(false);
   const [telegramVerification, setTelegramVerification] = useState(null);
 
   const handleTelegramVerified = useCallback((result) => {
@@ -274,18 +276,28 @@ export default function CustomerAccessPage() {
     }
   }
 
-  async function enterAsGuest() {
+  async function enterAsGuest(event) {
+    event.preventDefault();
+    if (!guestPassword.trim()) {
+      setError('Inserisci la password di accesso visitatore.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const response = await fetch('/api/guest-entry', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: guestPassword }),
         cache: 'no-store',
       });
-      if (!response.ok) throw new Error('Ingresso visitatore non riuscito');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error || 'Ingresso visitatore non riuscito.');
+      setGuestPassword('');
       window.location.assign('/');
-    } catch {
-      setError('Impossibile entrare come visitatore. Riprova.');
+    } catch (error) {
+      setError(error?.message || 'Impossibile entrare come visitatore. Riprova.');
+    } finally {
       setBusy(false);
     }
   }
@@ -378,7 +390,16 @@ export default function CustomerAccessPage() {
         </form>
         {guestEnabled ? (
           <div className="mt-5 border-t border-emerald-100 pt-5">
-            <button type="button" disabled={busy} onClick={enterAsGuest} className="w-full rounded-xl border border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-800 disabled:opacity-60">{busy ? 'Attendi...' : 'Entra come visitatore'}</button>
+            {!guestFormOpen ? (
+              <button type="button" disabled={busy} onClick={() => { setGuestFormOpen(true); setError(''); }} className="w-full rounded-xl border border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-800 disabled:opacity-60">Entra come visitatore</button>
+            ) : (
+              <form onSubmit={enterAsGuest} className="space-y-3">
+                <label htmlFor="guest-password" className="block text-left text-sm font-semibold text-gray-700">Password di accesso visitatore</label>
+                <input id="guest-password" type="password" required maxLength={128} autoComplete="off" value={guestPassword} onChange={(event) => { setGuestPassword(event.target.value); setError(''); }} placeholder="Password visitatore" className="wl-input w-full px-4 py-3" />
+                {error ? <p role="alert" className="text-sm font-semibold text-red-600">{error}</p> : null}
+                <button type="submit" disabled={busy} className="w-full rounded-xl border border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-800 disabled:opacity-60">{busy ? 'Verifica...' : 'Entra come visitatore'}</button>
+              </form>
+            )}
             <p className="mt-2 text-xs text-gray-500">Puoi consultare il catalogo senza registrarti. I visitatori non possono inviare ordini.</p>
           </div>
         ) : null}
