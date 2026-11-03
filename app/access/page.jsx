@@ -177,6 +177,10 @@ export default function CustomerAccessPage() {
   const [guestFormOpen, setGuestFormOpen] = useState(false);
   const [telegramVerification, setTelegramVerification] = useState(null);
 
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+
   const handleTelegramVerified = useCallback((result) => {
     setTelegramVerification(result);
     setError('');
@@ -187,9 +191,6 @@ export default function CustomerAccessPage() {
     setTelegramVerification(null);
     setError(message);
   }, []);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -206,11 +207,11 @@ export default function CustomerAccessPage() {
         if (active && sessionResponse.ok) {
           const session = await sessionResponse.json();
           if (session?.authenticated === true && session?.mustChangePassword !== true) {
-            setNotice('Hai giÃƒÆ’Ã‚Â  effettuato lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢accesso. Puoi entrare nel catalogo.');
+            setNotice('Hai giÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  effettuato lÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢accesso. Puoi entrare nel catalogo.');
           }
         }
       } catch {
-        // L'ingresso ospite resta nascosto se non ÃƒÆ’Ã‚Â¨ possibile verificare le impostazioni.
+        // L'ingresso ospite resta nascosto se non ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨ possibile verificare le impostazioni.
       }
     }
     load();
@@ -231,7 +232,7 @@ export default function CustomerAccessPage() {
         Date.now() >= new Date(telegramVerification.expiresAt).getTime())
     ) {
       setTelegramVerification(null);
-      setError('La verifica Telegram ÃƒÆ’Ã‚Â¨ scaduta. Effettua una nuova verifica.');
+      setError('La verifica Telegram ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨ scaduta. Effettua una nuova verifica.');
       return;
     }
     if (mode === 'register' && password !== confirmPassword) {
@@ -270,7 +271,7 @@ export default function CustomerAccessPage() {
         router.push('/');
       }
     } catch {
-      setError('Impossibile collegarsi al server. Riprova piÃƒÆ’Ã‚Â¹ tardi.');
+      setError('Impossibile collegarsi al server. Riprova piÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¹ tardi.');
     } finally {
       setBusy(false);
     }
@@ -316,7 +317,7 @@ export default function CustomerAccessPage() {
         <div className="mx-auto mt-2 h-px w-20 bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
         <h1 className="mt-5 text-xl font-black text-gray-900">Accesso Weedlivero</h1>
         <p className="mt-2 text-sm leading-relaxed text-gray-600">Accedi con il tuo account, richiedi la registrazione oppure entra come visitatore.</p>
-        <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃƒÆ’Ã‚Â  di accesso">
+        <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  di accesso">
           <button type="button" onClick={() => { setMode('login'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'login' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Accedi</button>
           <button type="button" onClick={() => { setMode('register'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
         </div>
