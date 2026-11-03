@@ -377,6 +377,9 @@ export default function CustomerAccessPage() {
           )}
           <label className="block text-left text-sm font-semibold text-gray-700" htmlFor="customer-password">Password</label>
           <input id="customer-password" type="password" className="wl-input w-full px-4 py-3" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 8 : 1} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" />
+          {mode === 'login' ? (
+            <a href="/access/reset" className="block text-right text-sm font-semibold text-emerald-700 underline">Password dimenticata?</a>
+          ) : null}
           {mode === 'register' ? (
             <>
               <label className="block text-left text-sm font-semibold text-gray-700" htmlFor="customer-confirm">Conferma password</label>
