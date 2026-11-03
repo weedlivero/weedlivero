@@ -1,4 +1,4 @@
-
+﻿
 import { NextResponse } from "next/server";
 import { clearAdminSession } from "@/lib/admin-session";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST() {
   try {
-    clearAdminSession();
+    await clearAdminSession();
 
     return NextResponse.json(
       { success: true },
@@ -30,3 +30,4 @@ export async function POST() {
     );
   }
 }
+
