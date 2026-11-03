@@ -25,7 +25,12 @@ export default function AdminUsersPage() {
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      load();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
   async function apply(user, action) {
     const verb = { approve: 'approvare', reject: 'rifiutare', suspend: 'sospendere', reactivate: 'riattivare' }[action];
     if (!window.confirm(`Vuoi ${verb} l’utente ${user.username}?`)) return;

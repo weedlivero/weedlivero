@@ -88,6 +88,7 @@ export default function AddToRequestListButton({
   );
 
   useEffect(() => {
+    const timer = setTimeout(() => {
     const existing =
       getRequestListProduct(product.id);
 
@@ -98,6 +99,8 @@ export default function AddToRequestListButton({
     setSelections(existingSelections);
     setSavedSelections(existingSelections);
     setLoaded(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [product.id]);
 
   const totalQuantity = Object.values(

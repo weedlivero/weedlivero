@@ -36,7 +36,10 @@ export default function AdminCategoriesPage() {
   }
 
   useEffect(() => {
-    loadCategories();
+    const timer = setTimeout(() => {
+      void loadCategories();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   async function toggleCategory(category) {

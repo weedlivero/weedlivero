@@ -11,10 +11,6 @@ export default function AdminMenuActions() {
   const [changingMode, setChangingMode] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
   async function loadSettings() {
     try {
       setLoading(true);
@@ -49,6 +45,15 @@ export default function AdminMenuActions() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadSettings();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+
 
   async function changeMode(mode) {
     if (

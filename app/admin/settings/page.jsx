@@ -38,11 +38,7 @@ export default function AdminSettingsPage() {
 
   const [settings, setSettings] = useState(defaultSettings);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  async function readJsonResponse(response) {
+async function readJsonResponse(response) {
     const responseText = await response.text();
 
     if (!responseText) {
@@ -98,6 +94,15 @@ export default function AdminSettingsPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadSettings();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  
 
   async function saveGuestAccess(enabled) {
     if (savingGuestAccess || saving || loading) return;
