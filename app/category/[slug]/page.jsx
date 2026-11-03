@@ -21,7 +21,8 @@ export default async function CategoryPage({ params }) {
     }
   }
 
-  const category = await getCategoryBySlug(params.slug);
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
 
   if (!category || category.active !== true) {
     notFound();
