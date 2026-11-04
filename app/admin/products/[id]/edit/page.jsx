@@ -1920,7 +1920,9 @@ export default function EditProductPage() {
 
 
 
-              <input
+              <div className="flex flex-col gap-2">
+<label className="block text-sm font-bold text-gray-700">Codice prodotto</label>
+<input
 
 
 
@@ -1941,6 +1943,7 @@ export default function EditProductPage() {
 
 
               />
+</div>
 
 
 
@@ -1948,7 +1951,9 @@ export default function EditProductPage() {
 
 
 
-              <input
+              <div className="flex flex-col gap-2">
+<label className="block text-sm font-bold text-gray-700">Nome prodotto</label>
+<input
 
 
 
@@ -1981,6 +1986,7 @@ export default function EditProductPage() {
 
 
               />
+</div>
 
 
 
@@ -1988,7 +1994,9 @@ export default function EditProductPage() {
 
 
 
-              <input
+              <div className="flex flex-col gap-2">
+<label className="block text-sm font-bold text-gray-700">Brand / Tipologia</label>
+<input
 
 
 
@@ -2017,6 +2025,7 @@ export default function EditProductPage() {
 
 
               />
+</div>
 
 
 
@@ -2024,7 +2033,9 @@ export default function EditProductPage() {
 
 
 
-              <select
+              <div className="flex flex-col gap-2">
+<label className="block text-sm font-bold text-gray-700">Categoria</label>
+<select
 
 
 
@@ -2109,6 +2120,7 @@ export default function EditProductPage() {
 
 
               </select>
+</div>
 
 
 
