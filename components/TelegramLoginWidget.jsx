@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef } from 'react';
 
@@ -19,7 +19,7 @@ export default function TelegramLoginWidget({ onVerified, onError }) {
 
     async function initializeTelegram() {
       try {
-        const response = await fetch('/api/public-settings', {
+        const response = await fetch('/api/telegram-login-config', {
           cache: 'no-store',
         });
 
@@ -28,7 +28,7 @@ export default function TelegramLoginWidget({ onVerified, onError }) {
         }
 
         const result = await response.json();
-        const botUsername = result.settings?.telegram_login_bot_username;
+        const botUsername = result.botUsername;
 
         if (cancelled || !containerRef.current) return;
 
