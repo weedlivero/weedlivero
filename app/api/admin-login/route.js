@@ -17,7 +17,7 @@ function isSameOrigin(request) {
   const origin = request.headers.get('origin');
   if (!origin) return false;
   try {
-    return new URL(origin).origin === new URL(request.url).origin;
+    return new URL(origin).origin === 'https://weedlivero.shop';
   } catch {
     return false;
   }
