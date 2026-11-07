@@ -49,7 +49,7 @@ export async function POST(request) {
 
     return noStore({
       success: true,
-      botUrl: `https://t.me/WLIVERO_Verify_2_Bot?start=${code}`,
+      botUrl: `https://t.me/${process.env.TELEGRAM_VERIFY_BOT_USERNAME || "WLIVERO_Verify_2_Bot"}?start=${code}`,
       requestCode: code,
       browserSecret,
       expiresAt,

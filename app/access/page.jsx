@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import TelegramLoginWidget from '@/components/TelegramLoginWidget';
 
 function TelegramRegistrationWidget({ onVerified, onError }) {
   const [verification, setVerification] = useState(null);
@@ -158,7 +159,7 @@ function TelegramRegistrationWidget({ onVerified, onError }) {
           rel="noopener noreferrer"
           className="block text-sm font-semibold text-emerald-700 underline"
         >
-          Apri @WLIVERO_Verify_2_Bot
+          Apri il bot di verifica Telegram
         </a>
       ) : null}
       {status ? <p role="status" className="text-xs text-gray-600">{status}</p> : null}
@@ -363,6 +364,18 @@ export default function CustomerAccessPage() {
                   <p className="mb-2 text-sm font-semibold text-gray-800">
                     Prima verifica il tuo account Telegram
                   </p>
+                  <p className="mb-2 text-xs text-gray-600">
+                    Autenticati direttamente con Telegram:
+                  </p>
+                  <TelegramLoginWidget
+                    onVerified={handleTelegramVerified}
+                    onError={handleTelegramError}
+                  />
+                  <div className="my-3 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-emerald-200" />
+                    <span className="text-xs text-gray-500">oppure</span>
+                    <div className="h-px flex-1 bg-emerald-200" />
+                  </div>
                   <TelegramRegistrationWidget
                     onVerified={handleTelegramVerified}
                     onError={handleTelegramError}

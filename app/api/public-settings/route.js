@@ -54,7 +54,14 @@ export async function GET() {
     }
 
     return Response.json(
-      { settings: data },
+      {
+        settings: {
+          ...data,
+          telegram_login_bot_username:
+            process.env.TELEGRAM_VERIFY_BOT_USERNAME ||
+            'WLIVERO_Verify_2_Bot',
+        },
+      },
       {
         headers: {
           'Cache-Control': 'no-store',
