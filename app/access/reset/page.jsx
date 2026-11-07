@@ -54,7 +54,7 @@ export default function PasswordResetPage() {
    <h1 className="text-xl font-black text-gray-900">Recupera la password</h1>
    <p className="mt-3 text-sm text-gray-600">Conferma la tua identità con il Telegram associato al tuo account Weedlivero.</p>
    {phase==='start'&&<button type="button" disabled={busy} onClick={start} className="wl-button-primary mt-6 w-full px-4 py-3 disabled:opacity-60">{busy?'Attendi...':'Verificati con Telegram'}</button>}
-   {phase==='verify'&&<div className="mt-6 space-y-3"><p className="text-sm text-gray-700">In attesa della verifica Telegram…</p><a href={request?.botUrl} target="_blank" rel="noopener noreferrer" className="block text-emerald-700 underline">Apri @wliveroverifybot</a><button type="button" onClick={()=>{if(timer.current)clearInterval(timer.current);setPhase('start');setRequest(null);setError('');}} className="text-sm underline">Ricomincia</button></div>}
+   {phase==='verify'&&<div className="mt-6 space-y-3"><p className="text-sm text-gray-700">In attesa della verifica Telegram…</p><a href={request?.botUrl} target="_blank" rel="noopener noreferrer" className="block text-emerald-700 underline">Apri @WLIVERO_Verify_2_Bot</a><button type="button" onClick={()=>{if(timer.current)clearInterval(timer.current);setPhase('start');setRequest(null);setError('');}} className="text-sm underline">Ricomincia</button></div>}
    {phase==='password'&&<form onSubmit={finish} className="mt-6 space-y-3 text-left">
     <label htmlFor="new-password" className="block text-sm font-semibold">Nuova password</label>
     <input id="new-password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" className="wl-input w-full px-4 py-3" value={password} onChange={e=>setPassword(e.target.value)}/>

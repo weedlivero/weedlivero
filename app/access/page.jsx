@@ -158,7 +158,7 @@ function TelegramRegistrationWidget({ onVerified, onError }) {
           rel="noopener noreferrer"
           className="block text-sm font-semibold text-emerald-700 underline"
         >
-          Apri @wliveroverifybot
+          Apri @WLIVERO_Verify_2_Bot
         </a>
       ) : null}
       {status ? <p role="status" className="text-xs text-gray-600">{status}</p> : null}

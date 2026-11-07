@@ -75,7 +75,7 @@ export async function POST(request) {
 
     return noStore({
       success: true,
-      botUrl: `https://t.me/wliveroverifybot?start=${code}`,
+      botUrl: `https://t.me/WLIVERO_Verify_2_Bot?start=${code}`,
       requestCode: code,
       browserSecret,
       expiresAt,
