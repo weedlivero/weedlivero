@@ -14,7 +14,7 @@ const sha256 = (value) =>
   createHash('sha256').update(value).digest('hex');
 
 export async function POST(request) {
-  if (process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true') {
+  if ((process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true' && process.env.CUSTOMER_LOGIN_ENABLED !== 'true')) {
     return noStore({ error: 'Registrazione non disponibile.' }, 503);
   }
 
@@ -54,7 +54,25 @@ export async function POST(request) {
       return noStore({ error: 'Richiesta troppo grande.' }, 413);
     }
 
-    const { requestCode, browserSecret } = JSON.parse(raw);
+    const { requestCode, browserSecret, purpose = 'registration' } = JSON.parse(raw);
+
+    if (!['registration', 'login'].includes(purpose)) {
+      return noStore({ error: 'Operazione non valida.' }, 400);
+    }
+
+    if (
+      purpose === 'login' &&
+      process.env.CUSTOMER_LOGIN_ENABLED !== 'true'
+    ) {
+      return noStore({ error: 'Accesso clienti non disponibile.' }, 503);
+    }
+
+    if (
+      purpose === 'registration' &&
+      process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true'
+    ) {
+      return noStore({ error: 'Registrazione non disponibile.' }, 503);
+    }
 
     if (
       typeof requestCode !== 'string' ||
@@ -73,6 +91,7 @@ export async function POST(request) {
         p_request_hash: sha256(requestCode),
         p_browser_secret_hash: sha256(browserSecret),
         p_token_hash: sha256(verificationToken),
+        p_purpose: purpose,
       }
     );
 
@@ -93,7 +112,7 @@ export async function POST(request) {
       .from('customer_telegram_verifications')
       .select('telegram_username')
       .eq('token_hash', sha256(verificationToken))
-      .eq('purpose', 'registration')
+      .eq('purpose', purpose)
       .is('consumed_at', null)
       .gt('expires_at', new Date().toISOString())
       .single();

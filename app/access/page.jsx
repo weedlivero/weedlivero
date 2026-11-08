@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TelegramLoginWidget from '@/components/TelegramLoginWidget';
 
-function TelegramRegistrationWidget({ onVerified, onError }) {
+function TelegramRegistrationWidget({ onVerified, onError, purpose = 'registration' }) {
   const [verification, setVerification] = useState(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
@@ -32,7 +32,7 @@ function TelegramRegistrationWidget({ onVerified, onError }) {
       const response = await fetch('/api/customer/telegram/bot/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ purpose }),
         cache: 'no-store',
       });
 
@@ -98,7 +98,7 @@ function TelegramRegistrationWidget({ onVerified, onError }) {
           if (check.status !== 'verified') return;
 
           clearInterval(timerRef.current);
-          setStatus('Verifica completata. Preparazione registrazione...');
+          setStatus(purpose === 'login' ? 'Accesso in corso...' : 'Preparazione registrazione...');
 
           const completeResponse = await fetch('/api/customer/telegram/bot/complete', {
             method: 'POST',
@@ -106,6 +106,7 @@ function TelegramRegistrationWidget({ onVerified, onError }) {
             body: JSON.stringify({
               requestCode: result.requestCode,
               browserSecret: result.browserSecret,
+              purpose,
             }),
             cache: 'no-store',
           });
@@ -322,8 +323,27 @@ export default function CustomerAccessPage() {
           <p className="text-sm font-bold text-gray-800">
             Accesso rapido senza password
           </p>
-          <TelegramLoginWidget
-            autoLogin
+          <TelegramRegistrationWidget
+            purpose="login"
+            onVerified={async (result) => {
+              try {
+                const response = await fetch('/api/customer/telegram/login', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    verificationToken: result.verificationToken,
+                  }),
+                  cache: 'no-store',
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                  throw new Error(data.error || 'Accesso Telegram non riuscito.');
+                }
+                window.location.assign('/');
+              } catch (error) {
+                setError(error.message || 'Accesso non riuscito.');
+              }
+            }}
             onError={(message) => {
               setError(message);
               setNotice('');

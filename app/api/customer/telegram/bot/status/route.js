@@ -14,7 +14,7 @@ const sha256 = (value) =>
   createHash('sha256').update(value).digest('hex');
 
 export async function POST(request) {
-  if (process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true') {
+  if ((process.env.CUSTOMER_REGISTRATION_ENABLED !== 'true' && process.env.CUSTOMER_LOGIN_ENABLED !== 'true')) {
     return noStore({ error: 'Registrazione non disponibile.' }, 503);
   }
 
