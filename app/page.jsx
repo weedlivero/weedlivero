@@ -34,7 +34,7 @@ export default async function HomePage() {
   const featuredProduct = featuredProducts[0];
 
   return (
-    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
+    <AccessGate bypass={true}>
       <UserPopup />
 
       <main className="min-h-screen pb-20">
