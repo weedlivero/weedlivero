@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef } from 'react';
 
-export default function TelegramLoginWidget({ onVerified, onError }) {
+export default function TelegramLoginWidget({ onVerified, onError, autoLogin = false }) {
   const containerRef = useRef(null);
   const verifiedRef = useRef(onVerified);
   const errorRef = useRef(onError);
@@ -40,15 +40,16 @@ export default function TelegramLoginWidget({ onVerified, onError }) {
 
         window[callbackName] = async (user) => {
           try {
-            const verificationResponse = await fetch(
-              '/api/customer/telegram/verify',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(user),
-                cache: 'no-store',
-              }
-            );
+            const endpoint = autoLogin
+              ? '/api/customer/telegram/auth'
+              : '/api/customer/telegram/verify';
+
+            const verificationResponse = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(user),
+              cache: 'no-store',
+            });
 
             const verificationResult = await verificationResponse.json();
 
@@ -56,6 +57,28 @@ export default function TelegramLoginWidget({ onVerified, onError }) {
               throw new Error(
                 verificationResult.error || 'Verifica Telegram non riuscita.'
               );
+            }
+
+            if (autoLogin) {
+              const loginResponse = await fetch('/api/customer/telegram/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  verificationToken: verificationResult.verificationToken,
+                }),
+                cache: 'no-store',
+              });
+
+              const loginResult = await loginResponse.json();
+
+              if (!loginResponse.ok || !loginResult.success) {
+                throw new Error(
+                  loginResult.error || 'Accesso Telegram non riuscito.'
+                );
+              }
+
+              window.location.assign('/');
+              return;
             }
 
             if (!cancelled) {
@@ -94,16 +117,10 @@ export default function TelegramLoginWidget({ onVerified, onError }) {
 
     return () => {
       cancelled = true;
-
-      if (callbackName) {
-        delete window[callbackName];
-      }
-
-      if (script) {
-        script.remove();
-      }
+      if (callbackName) delete window[callbackName];
+      if (script) script.remove();
     };
-  }, []);
+  }, [autoLogin]);
 
   return (
     <div

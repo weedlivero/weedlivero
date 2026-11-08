@@ -318,6 +318,18 @@ export default function CustomerAccessPage() {
         <div className="mx-auto mt-2 h-px w-20 bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
         <h1 className="mt-5 text-xl font-black text-gray-900">Accesso Weedlivero</h1>
         <p className="mt-2 text-sm leading-relaxed text-gray-600">Accedi con il tuo account, richiedi la registrazione oppure entra come visitatore.</p>
+        <div className="mt-6 space-y-3">
+          <p className="text-sm font-bold text-gray-800">
+            Accesso rapido senza password
+          </p>
+          <TelegramLoginWidget
+            autoLogin
+            onError={(message) => {
+              setError(message);
+              setNotice('');
+            }}
+          />
+        </div>
         <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  di accesso">
           <button type="button" onClick={() => { setMode('login'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'login' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Accedi</button>
           <button type="button" onClick={() => { setMode('register'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
