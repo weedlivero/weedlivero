@@ -32,6 +32,7 @@ export async function GET() {
         catalog_name,
         catalog_url,
         guest_access_enabled,
+        manual_registration_enabled,
         telegram_enabled,
         telegram_username,
         signal_enabled,

@@ -175,6 +175,7 @@ export default function CustomerAccessPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [guestEnabled, setGuestEnabled] = useState(false);
+  const [manualRegistrationEnabled, setManualRegistrationEnabled] = useState(false);
   const [guestPassword, setGuestPassword] = useState('');
   const [guestFormOpen, setGuestFormOpen] = useState(false);
   const [telegramVerification, setTelegramVerification] = useState(null);
@@ -205,6 +206,9 @@ export default function CustomerAccessPage() {
         if (active && settingsResponse.ok) {
           const result = await settingsResponse.json();
           setGuestEnabled(result?.settings?.guest_access_enabled === true);
+          setManualRegistrationEnabled(
+            result?.settings?.manual_registration_enabled === true
+          );
         }
         if (active && sessionResponse.ok) {
           const session = await sessionResponse.json();
@@ -352,7 +356,9 @@ export default function CustomerAccessPage() {
         </div>
         <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  di accesso">
           <button type="button" onClick={() => { setMode('login'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'login' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Accedi</button>
-          <button type="button" onClick={() => { setMode('register'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
+          {manualRegistrationEnabled ? (
+            <button type="button" onClick={() => { setMode('register'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
+          ) : null}
         </div>
         <form onSubmit={submit} className="mt-5 space-y-3">
           {mode === 'register' ? (

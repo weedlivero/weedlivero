@@ -1,4 +1,4 @@
-﻿import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import { createHash } from 'node:crypto';
 import {
   customerDb,
@@ -32,6 +32,24 @@ export async function POST(request) {
     }
 
     const db = customerDb();
+
+    const { data: registrationSettings, error: settingsError } = await db
+      .from('settings')
+      .select('manual_registration_enabled')
+      .eq('id', 1)
+      .single();
+
+    if (settingsError || !registrationSettings) {
+      return noStore({
+        error: 'Impossibile verificare le impostazioni di registrazione.',
+      }, 503);
+    }
+
+    if (registrationSettings.manual_registration_enabled !== true) {
+      return noStore({
+        error: 'Registrazione manuale disabilitata.',
+      }, 403);
+    }
 
     const ipAllowed = await customerLimit(
       db, 'customer_register_ip', ip, 5

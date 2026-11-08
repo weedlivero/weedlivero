@@ -9,6 +9,7 @@ const defaultSettings = {
   welcome_message: '',
   catalog_access_code: '',
   guest_access_enabled: false,
+  manual_registration_enabled: false,
 
   current_admin_password: '',
   new_admin_password: '',
@@ -35,6 +36,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showPopupPreview, setShowPopupPreview] = useState(false);
   const [savingGuestAccess, setSavingGuestAccess] = useState(false);
+  const [savingManualRegistration, setSavingManualRegistration] = useState(false);
 
   const [settings, setSettings] = useState(defaultSettings);
 
@@ -75,6 +77,8 @@ async function readJsonResponse(response) {
         ...(result.settings || {}),
         guest_access_enabled:
           result.settings?.guest_access_enabled === true,
+        manual_registration_enabled:
+          result.settings?.manual_registration_enabled === true,
         telegram_enabled:
           result.settings?.telegram_enabled === true,
         signal_enabled:
@@ -102,8 +106,53 @@ async function readJsonResponse(response) {
     return () => clearTimeout(timer);
   }, []);
 
-  
 
+
+  async function saveManualRegistration(enabled) {
+    if (savingManualRegistration || saving || loading) return;
+
+    const previous = settings.manual_registration_enabled === true;
+
+    setSettings((current) => ({
+      ...current,
+      manual_registration_enabled: enabled,
+    }));
+
+    setSavingManualRegistration(true);
+
+    try {
+      const response = await fetch('/api/settings/manual-registration', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manual_registration_enabled: enabled }),
+      });
+
+      const result = await readJsonResponse(response);
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Impossibile aggiornare la registrazione');
+      }
+
+      setSettings((current) => ({
+        ...current,
+        manual_registration_enabled:
+          result.manual_registration_enabled === true,
+      }));
+    } catch (error) {
+      setSettings((current) => ({
+        ...current,
+        manual_registration_enabled: previous,
+      }));
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Errore aggiornamento registrazione'
+      );
+    } finally {
+      setSavingManualRegistration(false);
+    }
+  }
   async function saveGuestAccess(enabled) {
     if (savingGuestAccess || saving || loading) return;
     const previous = settings.guest_access_enabled === true;
@@ -201,6 +250,33 @@ async function readJsonResponse(response) {
           </p>
         </div>
 
+        <section className="space-y-3 rounded-3xl bg-white p-6 shadow">
+          <h2 className="text-xl font-black text-gray-900">
+            Registrazione clienti
+          </h2>
+
+          <label className="flex items-center justify-between gap-4">
+            <span className="font-bold text-gray-800">
+              Consenti registrazione manuale
+            </span>
+
+            <input
+              type="checkbox"
+              checked={settings.manual_registration_enabled === true}
+              onChange={(event) =>
+                saveManualRegistration(event.target.checked)
+              }
+              disabled={savingManualRegistration || saving || loading}
+              className="h-5 w-5 disabled:opacity-50"
+            />
+          </label>
+
+          <p className="text-xs text-gray-600">
+            {savingManualRegistration
+              ? 'Salvataggio registrazione...'
+              : 'Mostra o nasconde il pulsante Registrati nella schermata di accesso.'}
+          </p>
+        </section>
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
             <h2 className="text-2xl font-black text-gray-900">
@@ -258,6 +334,7 @@ async function readJsonResponse(response) {
           </div>
         </section>
 
+
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
             <h2 className="text-2xl font-black text-gray-900">
@@ -283,6 +360,7 @@ async function readJsonResponse(response) {
             {savingGuestAccess ? 'Salvataggio accesso ospiti...' : 'Modifica salvata immediatamente. Gli ospiti possono consultare il catalogo, ma non effettuare ordini.'}
           </p>
         </section>
+
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
             <h2 className="text-2xl font-black text-gray-900">
@@ -339,6 +417,7 @@ async function readJsonResponse(response) {
             />
           </div>
         </section>
+
 
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
@@ -401,6 +480,7 @@ async function readJsonResponse(response) {
             </p>
           </div>
         </section>
+
 
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
@@ -489,6 +569,7 @@ async function readJsonResponse(response) {
           </button>
         </section>
 
+
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
             <h2 className="text-2xl font-black text-gray-900">
@@ -511,6 +592,7 @@ async function readJsonResponse(response) {
             />
           </div>
         </section>
+
 
         <section className="space-y-5 rounded-3xl bg-white p-6 shadow">
           <div>
