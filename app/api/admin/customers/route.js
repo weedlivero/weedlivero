@@ -30,7 +30,7 @@ export async function GET() {
 export async function PATCH(request) {
   if (!(await verifyAdminSession())) return reply({ error: 'Non autorizzato' }, 401);
   const origin = request.headers.get('origin');
-  if (!origin || origin !== new URL(request.url).origin) return reply({ error: 'Origine non autorizzata' }, 403);
+  if (!origin || origin !== 'https://weedlivero.shop') return reply({ error: 'Origine non autorizzata' }, 403);
   if (!(request.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) {
     return reply({ error: 'Formato non valido' }, 415);
   }
@@ -84,7 +84,7 @@ export async function PATCH(request) {
 export async function DELETE(request) {
   if (!(await verifyAdminSession())) return reply({ error: 'Non autorizzato' }, 401);
   const origin = request.headers.get('origin');
-  if (!origin || origin !== new URL(request.url).origin) {
+  if (!origin || origin !== 'https://weedlivero.shop') {
     return reply({ error: 'Origine non autorizzata' }, 403);
   }
   if (!(request.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) {
