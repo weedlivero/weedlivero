@@ -113,7 +113,7 @@ updated_at
 export async function PATCH(request) {
   try {
     const origin = request.headers.get('origin');
-    if (!origin || origin !== new URL(request.url).origin) {
+    if (!origin || origin !== 'https://weedlivero.shop') {
       return Response.json({ error: 'Origine richiesta non autorizzata.' }, { status: 403, headers: noStoreHeaders() });
     }
     if (!(await verifyAdminSession())) {
@@ -404,7 +404,7 @@ export async function PUT(request) {
   const headers = noStoreHeaders();
   try {
     const origin = request.headers.get('origin');
-    if (!origin || origin !== new URL(request.url).origin) {
+    if (!origin || origin !== 'https://weedlivero.shop') {
       return Response.json({ error: 'Origine richiesta non autorizzata.' }, { status: 403, headers });
     }
     if (!(await verifyAdminSession())) {
