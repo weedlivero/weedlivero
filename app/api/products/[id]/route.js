@@ -22,9 +22,8 @@ function sameOrigin(request) {
   const origin = request.headers.get('origin');
   if (!origin) return false;
   try {
-    const target = new URL(request.url);
     const source = new URL(origin);
-    return source.protocol === target.protocol && source.host === target.host;
+    return source.origin === 'https://weedlivero.shop';
   } catch { return false; }
 }
 
