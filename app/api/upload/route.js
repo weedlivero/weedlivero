@@ -16,8 +16,7 @@ export async function POST(request) {
       const target = new URL(request.url);
       const source = new URL(origin || '');
       authorizedOrigin =
-        source.protocol === target.protocol &&
-        source.host === target.host;
+        source.origin === 'https://weedlivero.shop';
     } catch {
       authorizedOrigin = false;
     }
