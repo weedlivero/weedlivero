@@ -830,10 +830,16 @@ export default function RequestContactButtons({
 
   function openTelegram() {
     if (!telegramAvailable || orderInFlight.current) return;
+
     void runVerifiedOrder(async (checkedMessage) => {
-      const telegramUrl = `https://t.me/${encodeURIComponent(telegramUsername)}` +
-        `?text=${encodeURIComponent(checkedMessage)}`;
-      // Dopo una chiamata asincrona i popup possono essere bloccati: navigazione diretta.
+      try {
+        await navigator.clipboard.writeText(checkedMessage);
+      } catch {
+        setManualSignalMessage(checkedMessage);
+        throw new Error('Copia automatica non disponibile. Copia il messaggio qui sotto e apri Telegram.');
+      }
+
+      const telegramUrl = `https://t.me/${encodeURIComponent(telegramUsername)}`;
       window.location.assign(telegramUrl);
     });
   }
@@ -898,8 +904,28 @@ export default function RequestContactButtons({
         <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 text-center text-sm font-bold text-red-700">{orderError}</p>
       ) : null}
       {manualSignalMessage ? (
-        <textarea aria-label="Messaggio verificato da copiare" readOnly value={manualSignalMessage}
-          rows={8} className="w-full rounded-xl border border-gray-300 p-3 text-sm" />
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-gray-700">
+            Copia il messaggio qui sotto, apri Telegram e incollalo nella chat.
+          </p>
+          <textarea
+            aria-label="Messaggio verificato da copiare"
+            readOnly
+            value={manualSignalMessage}
+            rows={8}
+            className="w-full rounded-xl border border-gray-300 p-3 text-sm"
+          />
+          {telegramAvailable ? (
+            <a
+              href={`https://t.me/${encodeURIComponent(telegramUsername)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-xl bg-sky-500 px-4 py-3 text-center font-bold text-white"
+            >
+              Apri Telegram
+            </a>
+          ) : null}
+        </div>
       ) : null}
 
 

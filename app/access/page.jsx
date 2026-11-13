@@ -354,12 +354,22 @@ export default function CustomerAccessPage() {
             }}
           />
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-2" role="group" aria-label="ModalitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â  di accesso">
-          <button type="button" onClick={() => { setMode('login'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'login' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Accedi</button>
-          {manualRegistrationEnabled ? (
-            <button type="button" onClick={() => { setMode('register'); setTelegramVerification(null); setError(''); setNotice(''); }} className={`rounded-xl px-3 py-3 text-sm font-bold ${mode === 'register' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800'}`}>Registrati</button>
-          ) : null}
-        </div>
+        {manualRegistrationEnabled ? (
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setTelegramVerification(null);
+                setError('');
+                setNotice('');
+              }}
+              className="w-full rounded-xl border border-emerald-600 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800"
+            >
+              {mode === 'login' ? 'Registrati' : 'Torna all’accesso'}
+            </button>
+          </div>
+        ) : null}
         <form onSubmit={submit} className="mt-5 space-y-3">
           {mode === 'register' ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
