@@ -21,7 +21,7 @@ function TelegramRegistrationWidget({ onVerified, onError, purpose = 'registrati
   }, []);
 
   async function beginVerification() {
-    const telegramWindow = window.open('about:blank', '_blank');
+    // Non creare una scheda vuota prima di aprire Telegram.
     setLoading(true);
     setStatus('');
     onError('');
@@ -39,7 +39,6 @@ function TelegramRegistrationWidget({ onVerified, onError, purpose = 'registrati
       const result = await response.json();
 
       if (!response.ok || !result.requestCode || !result.browserSecret) {
-        if (telegramWindow) telegramWindow.close();
         throw new Error(result.error || 'Impossibile avviare Telegram.');
       }
 
@@ -48,7 +47,18 @@ function TelegramRegistrationWidget({ onVerified, onError, purpose = 'registrati
       setVerification(result);
       setStatus('Apri Telegram e premi Avvia nel bot.');
 
-      if (telegramWindow) telegramWindow.location.replace(result.botUrl);
+      const botLink = new URL(result.botUrl);
+      const botUsername = botLink.pathname.replace(/^\/+/, '');
+      const startCode = botLink.searchParams.get('start');
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS && botUsername && startCode) {
+        window.location.href =
+          `tg://resolve?domain=${encodeURIComponent(botUsername)}&start=${encodeURIComponent(startCode)}`;
+      } else {
+        window.open(result.botUrl, '_blank', 'noopener,noreferrer');
+      }
 
       let checking = false;
 
