@@ -839,7 +839,7 @@ export default function RequestContactButtons({
         throw new Error('Copia automatica non disponibile. Copia il messaggio qui sotto e apri Telegram.');
       }
 
-      const telegramUrl = `https://t.me/${encodeURIComponent(telegramUsername)}`;
+      const telegramUrl = `https://t.me/${encodeURIComponent(telegramUsername)}?text=${encodeURIComponent(checkedMessage)}`;
       window.location.assign(telegramUrl);
     });
   }
