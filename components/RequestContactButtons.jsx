@@ -654,6 +654,7 @@ export default function RequestContactButtons({
   const [verifyingOrder, setVerifyingOrder] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [manualSignalMessage, setManualSignalMessage] = useState('');
+  const [verifiedSignalMessage, setVerifiedSignalMessage] = useState('');
 
   useEffect(() => {
 
@@ -846,7 +847,12 @@ export default function RequestContactButtons({
 
   function openSignal() {
     if (!signalAvailable || orderInFlight.current) return;
+    setVerifiedSignalMessage("");
     void runVerifiedOrder(async (checkedMessage) => {
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.share) {
+        setVerifiedSignalMessage(checkedMessage);
+        return;
+      }
       try {
         await navigator.clipboard.writeText(checkedMessage);
         setShowSignalToast(true);
@@ -906,7 +912,7 @@ export default function RequestContactButtons({
       {manualSignalMessage ? (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-gray-700">
-            Copia il messaggio qui sotto, apri Telegram e incollalo nella chat.
+            Copia il messaggio qui sotto e incollalo nella conversazione Telegram o Signal.
           </p>
           <textarea
             aria-label="Messaggio verificato da copiare"
@@ -971,6 +977,26 @@ export default function RequestContactButtons({
 
 
 
+          {verifiedSignalMessage ? (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.share({
+                    text: verifiedSignalMessage,
+                  });
+                } catch (error) {
+                  if (error?.name !== 'AbortError') {
+                    setManualSignalMessage(verifiedSignalMessage);
+                    setOrderError('Condivisione non disponibile. Copia il messaggio qui sotto.');
+                  }
+                }
+              }}
+              className="w-full rounded-2xl bg-blue-700 p-4 font-black text-white"
+            >
+              Condividi ordine con Signal
+            </button>
+          ) : null}
           {showSignalToast ? (
 
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
