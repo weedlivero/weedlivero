@@ -13,12 +13,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function CategoryPage({ params }) {
-  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
-    const isAdmin = await verifyAdminSession();
-    if (!isAdmin) {
-      const access = await getCatalogAccess();
-      if (!access.allowed) redirect('/access');
-    }
+  const isAdmin = await verifyAdminSession();
+  if (!isAdmin) {
+    const access = await getCatalogAccess();
+    if (!access.allowed) redirect('/access');
   }
 
   const { slug } = await params;
@@ -32,7 +30,7 @@ export default async function CategoryPage({ params }) {
   const featuredProducts = products.filter((product) => product.featured);
 
   return (
-    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
+    <AccessGate bypass={true}>
       <Header title={category.title} />
 
       <main className="mx-auto max-w-5xl px-5 pb-28 pt-6">

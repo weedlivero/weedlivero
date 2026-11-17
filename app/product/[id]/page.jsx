@@ -85,12 +85,10 @@ function hasPriceInformation(product) {
 }
 
 export default async function ProductPage({ params }) {
-  if (process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true') {
-    const isAdmin = await verifyAdminSession();
-    if (!isAdmin) {
-      const access = await getCatalogAccess();
-      if (!access.allowed) redirect('/access');
-    }
+  const isAdmin = await verifyAdminSession();
+  if (!isAdmin) {
+    const access = await getCatalogAccess();
+    if (!access.allowed) redirect('/access');
   }
 
   const { id } = await params;
@@ -138,7 +136,7 @@ export default async function ProductPage({ params }) {
   ].filter((item) => formatPrice(item.value));
 
   return (
-    <AccessGate bypass={process.env.CUSTOMER_CATALOG_PROTECTION_ENABLED === 'true'}>
+    <AccessGate bypass={true}>
       <Header title="Prodotto" />
 
       <main className="mx-auto max-w-3xl px-5 pb-48 pt-6">
